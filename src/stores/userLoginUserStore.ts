@@ -1,18 +1,20 @@
 import { defineStore } from "pinia";
 import { ref } from "vue";
+import { getLoginUserUsingGet } from '@/api/userController'
 
 export const useLoginUserStore = defineStore("loginUser", () => {
-  const loginUser = ref<any>({
+  const loginUser = ref<API.LoginUserVo>({
     userName: "未登录",
   });
 
+  /**
+   * 远程获取用户登录信息
+   */
   async function fetchLoginUser() {
-    // todo 由于后端还没提供接口，暂时注释
-    // const res = await getCurrentUser();
-    // if (res.data.code === 0 && res.data.data) {
-    //   loginUser.value = res.data.data;
-    // }
-
+    const res = await getLoginUserUsingGet();
+    if (res.data.code === 20000 && res.data.data) {
+      loginUser.value = res.data.data;
+    }
     // //测试globalheader判断登录是否有效。
     // setTimeout(()=>{
     //   loginUser.value={ userName:"测试数据",id: 1}

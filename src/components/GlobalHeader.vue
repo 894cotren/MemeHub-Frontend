@@ -5,7 +5,7 @@
         <router-link to="/">
           <div class="title-bar">
             <img class="logo" src="../assets/logo.png" />
-            <div class="title">memehub</div>
+            <div class="title">Memehub</div>
           </div>
         </router-link>
       </a-col>
@@ -47,15 +47,20 @@ const items = ref<MenuProps['items']>([
     title: '主页',
   },
   {
+    key: '/admin/userManage',
+    label: '用户管理',
+    title: '用户管理',
+  },
+  {
     key: '/about',
     label: '关于',
     title: '关于',
   },
-  {
-    key: 'others',
-    label: h('a', { href: 'https://www.codefather.cn', target: '_blank' }, '编程导航'),
-    title: '编程导航',
-  },
+  // {
+  //   key: 'others',
+  //   label: h('a', { href: 'https://www.codefather.cn', target: '_blank' }, '编程导航'),
+  //   title: '编程导航',
+  // },
 ])
 
 //获取到路由对象。
