@@ -50,7 +50,15 @@
           </div>
         </template>
         <template v-else-if="column.key === 'action'">
-          <a-button danger @click="doDelete(record.id)">删除</a-button>
+          <a-popconfirm
+            title="你确认要删除该用户吗?"
+            ok-text="Yes"
+            cancel-text="No"
+            @confirm="doDelete(record.id)"
+            @cancel="cancelDelete"
+          >
+            <a-button danger>删除</a-button>
+          </a-popconfirm>
         </template>
       </template>
     </a-table>
@@ -186,5 +194,10 @@ const doDelete = async (id: string) => {
   } else {
     message.error('删除失败' + res.data.message)
   }
+}
+//取消删除用户
+const cancelDelete = (e: MouseEvent) => {
+  console.log(e)
+  message.error('取消删除用户')
 }
 </script>
