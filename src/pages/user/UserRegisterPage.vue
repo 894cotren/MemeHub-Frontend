@@ -37,7 +37,7 @@
       </a-form-item>
       <div class="tips">
         已有账号？
-        <RouterLink to="/user/register">去登录</RouterLink>
+        <RouterLink to="/user/login">去登录</RouterLink>
       </div>
 
       <a-form-item>
