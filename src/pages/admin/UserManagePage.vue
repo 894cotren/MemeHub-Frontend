@@ -33,8 +33,11 @@
           <div v-if="record.userRole === 'user'">
             <a-tag color="blue">用户</a-tag>
           </div>
-          <div v-else-if="record.userRole === 'vip'">
+          <div v-else-if="isVipValid(record)">
             <a-tag color="red">会员</a-tag>
+          </div>
+          <div v-else-if="record.userRole === 'vip'">
+            <a-tag color="default">会员已过期</a-tag>
           </div>
           <div v-else-if="record.userRole === 'admin'">
             <a-tag color="green">管理员</a-tag>
@@ -50,6 +53,67 @@
           </div>
         </template>
         <template v-else-if="column.key === 'action'">
+
+<!--          用户修改弹窗-->
+          <div>
+            <a-button type="primary" @click="openEditModal(record)">修改</a-button>
+            <a-modal
+              v-model:open="visible"
+              title="用户修改"
+              ok-text="确认修改"
+              cancel-text="取消"
+              @ok="onOk"
+              width="600px"
+            >
+              <a-form ref="formRef" :model="formState" layout="vertical" name="form_in_modal">
+                <a-form-item
+                  name="userAccount"
+                  label="用户账号"
+                  :rules="[{ required: true, message: '请输入用户账号!' }]"
+                >
+                  <a-input v-model:value="formState.userAccount" placeholder="请输入用户账号" />
+                </a-form-item>
+                <a-form-item
+                  name="userName"
+                  label="用户名"
+                  :rules="[{ required: true, message: '请输入用户名!' }]"
+                >
+                  <a-input v-model:value="formState.userName" placeholder="请输入用户名" />
+                </a-form-item>
+                <a-form-item name="userEmail" label="用户邮箱">
+                  <a-input v-model:value="formState.userEmail" placeholder="请输入用户邮箱" />
+                </a-form-item>
+                <a-form-item name="userProfile" label="用户简介">
+                  <a-textarea v-model:value="formState.userProfile" placeholder="请输入用户简介" />
+                </a-form-item>
+                <a-form-item name="userRole" label="用户角色">
+                  <a-select v-model:value="formState.userRole" placeholder="请选择用户角色">
+                    <a-select-option value="user">普通用户</a-select-option>
+                    <a-select-option value="vip">VIP会员</a-select-option>
+                    <a-select-option value="admin">管理员</a-select-option>
+                  </a-select>
+                </a-form-item>
+                <a-form-item name="vipNumber" label="会员编号">
+                  <a-input v-model:value="formState.vipNumber" placeholder="请输入会员编号" />
+                </a-form-item>
+                <a-form-item name="userAvatar" label="用户头像">
+                  <a-input v-model:value="formState.userAvatar" placeholder="请输入头像URL" />
+                </a-form-item>
+                <a-form-item name="vipExpireTime" label="会员到期时间">
+                  <a-date-picker
+                    v-model:value="formState.vipExpireTime"
+                    format="YYYY-MM-DD HH:mm:ss"
+                    show-time
+                    placeholder="请选择会员到期时间"
+                    style="width: 100%"
+                  />
+                </a-form-item>
+              </a-form>
+            </a-modal>
+          </div>
+
+
+<!--          用户删除按钮-->
           <a-popconfirm
             title="你确认要删除该用户吗?"
             ok-text="Yes"
@@ -67,9 +131,10 @@
 <script lang="ts" setup>
 import { SmileOutlined, DownOutlined } from '@ant-design/icons-vue'
 import { computed, onMounted, reactive, ref } from 'vue'
-import { userDeleteUsingPost, userPageListUsingPost } from '@/api/userController'
+import { userDeleteUsingPost, userPageListUsingPost, userUpdateUsingPost } from '@/api/userController'
 import { message } from 'ant-design-vue'
-import dayjs from 'dayjs'
+import dayjs, { Dayjs } from 'dayjs'
+import type { FormInstance } from 'ant-design-vue'
 /*需要展示的列*/
 const columns = [
   {
@@ -143,7 +208,7 @@ const pagination = computed(() => {
     pageSize: searchParams.pageSize ?? 10,
     total: total.value,
     showSizeChanger: true,
-    showTotal: (total) => `共 ${total} 条`,
+    showTotal: (total: number) => `共 ${total} 条`,
   }
 })
 
@@ -200,4 +265,74 @@ const cancelDelete = (e: MouseEvent) => {
   console.log(e)
   message.error('取消删除用户')
 }
+
+// 判断VIP是否有效（角色为vip且未过期）
+const isVipValid = (user: API.UserVo) => {
+  if (user.userRole !== 'vip') return false;
+  if (!user.vipExpireTime) return false;
+  return dayjs(user.vipExpireTime).isAfter(dayjs());
+};
+
+
+//编辑用户弹窗使用的
+const formRef = ref<FormInstance>();
+const visible = ref(false);
+const formState = reactive({
+  id: undefined as number | undefined,
+  userAccount: '',
+  userName: '',
+  userEmail: '',
+  userProfile: '',
+  userRole: '',
+  userAvatar: '',
+  vipNumber: '',
+  vipExpireTime: null as Dayjs | null,
+});
+
+// 打开编辑模态框
+const openEditModal = (user: API.UserVo) => {
+  // 填充表单数据
+  formState.id = user.id;
+  formState.userAccount = user.userAccount || '';
+  formState.userName = user.userName || '';
+  formState.userEmail = user.userEmail || '';
+  formState.userProfile = user.userProfile || '';
+  formState.userRole = user.userRole || '';
+  formState.userAvatar = user.userAvatar || '';
+  formState.vipNumber = user.vipNumber ? String(user.vipNumber) : '';
+  // 处理会员到期时间
+  formState.vipExpireTime = user.vipExpireTime ? dayjs(user.vipExpireTime) : null;
+  visible.value = true;
+};
+
+// 提交编辑表单
+const onOk = async () => {
+  try {
+    await formRef.value?.validate();
+    // 构造提交数据，将日期转换为字符串
+    const submitData: API.UserUpdateRequest = {
+      id: formState.id,
+      userAccount: formState.userAccount,
+      userName: formState.userName,
+      userEmail: formState.userEmail,
+      userProfile: formState.userProfile,
+      userRole: formState.userRole,
+      userAvatar: formState.userAvatar,
+      vipNumber: formState.vipNumber,
+      vipExpireTime: formState.vipExpireTime ? formState.vipExpireTime.toISOString() : undefined,
+    };
+    const res = await userUpdateUsingPost(submitData);
+    if (res.data.code === 20000) {
+      message.success('用户修改成功');
+      visible.value = false;
+      // 刷新数据
+      await fetchDataList();
+    } else {
+      message.error('修改失败：' + res.data.message);
+    }
+  } catch (error) {
+    message.error('表单验证失败');
+  }
+};
+
 </script>

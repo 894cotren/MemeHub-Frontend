@@ -102,7 +102,6 @@ declare namespace API {
     userAvatar?: string
     userEmail?: string
     userName?: string
-    userPassword?: string
     userProfile?: string
     userRole?: string
     vipExpireTime?: string
