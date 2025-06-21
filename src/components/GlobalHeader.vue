@@ -46,7 +46,7 @@
   </div>
 </template>
 <script lang="ts" setup>
-import { h, ref } from 'vue'
+import { computed, h, ref } from 'vue'
 import { HomeOutlined, LogoutOutlined } from '@ant-design/icons-vue'
 import { MenuProps, message } from 'ant-design-vue'
 import { useRouter } from 'vue-router'
@@ -55,7 +55,8 @@ import { userLogoutUsingGet } from '@/api/userController'
 
 const loginUserStore = useLoginUserStore()
 
-const items = ref<MenuProps['items']>([
+//原始菜单数组
+const originItems =[
   {
     key: '/',
     icon: () => h(HomeOutlined),
@@ -67,17 +68,29 @@ const items = ref<MenuProps['items']>([
     label: '用户管理',
     title: '用户管理',
   },
-  {
-    key: '/about',
-    label: '关于',
-    title: '关于',
-  },
-  // {
-  //   key: 'others',
-  //   label: h('a', { href: 'https://www.codefather.cn', target: '_blank' }, '编程导航'),
-  //   title: '编程导航',
-  // },
-])
+]
+
+/**
+ * 对菜单进行权限过滤
+ *  只有管理员才能访问/admin开头的页面
+ *  思路是获取到当前用户，在对菜单数组进行过滤  如果/admin开头就鉴权判断留不留下
+ */
+const filterMenus = (menus = [] as MenuProps['items']) => {
+  return menus?.filter((menu) => {
+    //管理员才能看到/admin开头的页面
+    if (menu?.key?.startsWith('/admin')) {
+      const loginUser = loginUserStore.loginUser
+      if (!loginUser || loginUser.userRole !== 'admin') {
+        return false
+      }
+    }
+    return true
+  })
+}
+//展示在菜单的路由数组
+const items = computed(() => {
+  return filterMenus(originItems)
+})
 
 //获取到路由对象。
 const router = useRouter()
@@ -94,6 +107,7 @@ const doMenuClick = ({ key }) => {
     path: key,
   })
 }
+
 /**
  * 退出登录
  */

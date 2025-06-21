@@ -112,6 +112,7 @@ declare namespace API {
   type UserVo = {
     createTime?: string
     favoriteCount?: number
+    favoriteLimit?: number
     id?: number
     userAccount?: string
     userAvatar?: string
