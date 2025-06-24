@@ -40,7 +40,6 @@ declare namespace API {
 
   type LoginUserVo = {
     createTime?: string
-    editTime?: string
     favoriteCount?: number
     id?: number
     updateTime?: string
@@ -50,8 +49,6 @@ declare namespace API {
     userName?: string
     userProfile?: string
     userRole?: string
-    vipExpireTime?: string
-    vipNumber?: number
   }
 
   type PageUserVo_ = {
@@ -86,7 +83,6 @@ declare namespace API {
     userName?: string
     userProfile?: string
     userRole?: string
-    vipNumber?: string
   }
 
   type UserRegisterRequest = {
@@ -104,8 +100,6 @@ declare namespace API {
     userName?: string
     userProfile?: string
     userRole?: string
-    vipExpireTime?: string
-    vipNumber?: string
   }
 
   type UserVo = {
@@ -119,7 +113,5 @@ declare namespace API {
     userName?: string
     userProfile?: string
     userRole?: string
-    vipExpireTime?: string
-    vipNumber?: number
   }
 }

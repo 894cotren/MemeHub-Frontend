@@ -8,9 +8,6 @@
       <a-form-item label="用户名">
         <a-input v-model:value="searchParams.userName" placeholder="请输入用户名" />
       </a-form-item>
-      <a-form-item label="会员编号">
-        <a-input v-model:value="searchParams.vipNumber" placeholder="请输入会员编号" />
-      </a-form-item>
       <a-form-item>
         <a-button type="primary" html-type="submit">搜索</a-button>
       </a-form-item>
@@ -33,12 +30,6 @@
           <div v-if="record.userRole === 'user'">
             <a-tag color="blue">用户</a-tag>
           </div>
-          <div v-else-if="isVipValid(record)">
-            <a-tag color="red">会员</a-tag>
-          </div>
-          <div v-else-if="record.userRole === 'vip'">
-            <a-tag color="default">会员已过期</a-tag>
-          </div>
           <div v-else-if="record.userRole === 'admin'">
             <a-tag color="green">管理员</a-tag>
           </div>
@@ -46,12 +37,7 @@
         <template v-if="column.dataIndex === 'createTime'">
           {{ dayjs(record.createTime).format('YYYY-MM-DD HH:mm:ss') }}
         </template>
-        <template v-if="column.dataIndex === 'vipExpireTime'">
-          <!--          //如果存在会员时间，那么格式化一下。-->
-          <div v-if="record.vipExpireTime">
-            {{ dayjs(record.vipExpireTime).format('YYYY-MM-DD HH:mm:ss') }}
-          </div>
-        </template>
+
         <template v-else-if="column.key === 'action'">
 
 <!--          用户修改弹窗-->
@@ -89,24 +75,11 @@
                 <a-form-item name="userRole" label="用户角色">
                   <a-select v-model:value="formState.userRole" placeholder="请选择用户角色">
                     <a-select-option value="user">普通用户</a-select-option>
-                    <a-select-option value="vip">VIP会员</a-select-option>
                     <a-select-option value="admin">管理员</a-select-option>
                   </a-select>
                 </a-form-item>
-                <a-form-item name="vipNumber" label="会员编号">
-                  <a-input v-model:value="formState.vipNumber" placeholder="请输入会员编号" />
-                </a-form-item>
                 <a-form-item name="userAvatar" label="用户头像">
                   <a-input v-model:value="formState.userAvatar" placeholder="请输入头像URL" />
-                </a-form-item>
-                <a-form-item name="vipExpireTime" label="会员到期时间">
-                  <a-date-picker
-                    v-model:value="formState.vipExpireTime"
-                    format="YYYY-MM-DD HH:mm:ss"
-                    show-time
-                    placeholder="请选择会员到期时间"
-                    style="width: 100%"
-                  />
                 </a-form-item>
               </a-form>
             </a-modal>
@@ -164,14 +137,6 @@ const columns = [
   {
     title: '用户邮箱',
     dataIndex: 'userEmail',
-  },
-  {
-    title: '会员编号',
-    dataIndex: 'vipNumber',
-  },
-  {
-    title: '会员到期时间',
-    dataIndex: 'vipExpireTime',
   },
   {
     title: '收藏数',
@@ -266,13 +231,6 @@ const cancelDelete = (e: MouseEvent) => {
   message.error('取消删除用户')
 }
 
-// 判断VIP是否有效（角色为vip且未过期）
-const isVipValid = (user: API.UserVo) => {
-  if (user.userRole !== 'vip') return false;
-  if (!user.vipExpireTime) return false;
-  return dayjs(user.vipExpireTime).isAfter(dayjs());
-};
-
 
 //编辑用户弹窗使用的
 const formRef = ref<FormInstance>();
@@ -285,8 +243,6 @@ const formState = reactive({
   userProfile: '',
   userRole: '',
   userAvatar: '',
-  vipNumber: '',
-  vipExpireTime: null as Dayjs | null,
 });
 
 // 打开编辑模态框
@@ -299,9 +255,6 @@ const openEditModal = (user: API.UserVo) => {
   formState.userProfile = user.userProfile || '';
   formState.userRole = user.userRole || '';
   formState.userAvatar = user.userAvatar || '';
-  formState.vipNumber = user.vipNumber ? String(user.vipNumber) : '';
-  // 处理会员到期时间
-  formState.vipExpireTime = user.vipExpireTime ? dayjs(user.vipExpireTime) : null;
   visible.value = true;
 };
 
@@ -318,8 +271,6 @@ const onOk = async () => {
       userProfile: formState.userProfile,
       userRole: formState.userRole,
       userAvatar: formState.userAvatar,
-      vipNumber: formState.vipNumber,
-      vipExpireTime: formState.vipExpireTime ? formState.vipExpireTime.toISOString() : undefined,
     };
     const res = await userUpdateUsingPost(submitData);
     if (res.data.code === 20000) {
