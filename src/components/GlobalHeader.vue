@@ -68,6 +68,11 @@ const originItems =[
     label: '用户管理',
     title: '用户管理',
   },
+  {
+    key: '/addPicture',
+    label: '创建图片',
+    title: '创建图片',
+  },
 ]
 
 /**

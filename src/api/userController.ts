@@ -31,7 +31,7 @@ export async function userDeleteUsingPost(
 
 /** getLoginUser GET /api/user/getLoginUser */
 export async function getLoginUserUsingGet(options?: { [key: string]: any }) {
-  return request<API.BaseResponseLoginUserVo_>('/api/user/getLoginUser', {
+  return request<API.BaseResponseLoginUserVO_>('/api/user/getLoginUser', {
     method: 'GET',
     ...(options || {}),
   })
@@ -43,7 +43,7 @@ export async function getUserVoByIdUsingGet(
   params: API.getUserVoByIdUsingGETParams,
   options?: { [key: string]: any }
 ) {
-  return request<API.BaseResponseUserVo_>('/api/user/getUserById', {
+  return request<API.BaseResponseUserVO_>('/api/user/getUserById', {
     method: 'GET',
     params: {
       ...params,
@@ -57,7 +57,7 @@ export async function userLoginUsingPost(
   body: API.UserLoginRequest,
   options?: { [key: string]: any }
 ) {
-  return request<API.BaseResponseLoginUserVo_>('/api/user/login', {
+  return request<API.BaseResponseLoginUserVO_>('/api/user/login', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -80,7 +80,7 @@ export async function userPageListUsingPost(
   body: API.UserPageListRequest,
   options?: { [key: string]: any }
 ) {
-  return request<API.BaseResponsePageUserVo_>('/api/user/pageList', {
+  return request<API.BaseResponsePageUserVO_>('/api/user/pageList', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
