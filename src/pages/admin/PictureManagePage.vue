@@ -21,6 +21,19 @@
           allow-clear
         />
       </a-form-item>
+      <a-form-item label="审核状态" name="reviewStatus">
+        <a-select
+          v-model:value="searchParams.reviewStatus"
+          placeholder="请选择审核状态"
+          style="min-width: 150px"
+          allow-clear
+        >
+          <a-select-option :value="0">待审核</a-select-option>
+          <a-select-option :value="1">审核通过</a-select-option>
+          <a-select-option :value="2">审核驳回</a-select-option>
+          <a-select-option :value="3">违规下架</a-select-option>
+        </a-select>
+      </a-form-item>
       <a-form-item label="创建时间" name="timeRange">
         <a-range-picker
           v-model:value="searchParams.timeRange"
