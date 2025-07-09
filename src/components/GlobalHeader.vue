@@ -64,6 +64,11 @@ const originItems =[
     title: '主页',
   },
   {
+    key: '/pictureShow',
+    label: 'meme图库',
+    title: 'meme图库',
+  },
+  {
     key: '/admin/userManage',
     label: '用户管理',
     title: '用户管理',

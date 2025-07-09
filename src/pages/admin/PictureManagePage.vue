@@ -47,7 +47,7 @@
       //column：当前列名，record：当前数据
       <template #bodyCell="{ column, record }">
         <template v-if="column.dataIndex === 'picUrl'">
-          <a-image :src="record.picUrl" :width="180" />
+          <a-image :src="record.picUrl" :width="140" />
         </template>
         <template v-if="column.dataIndex === 'tags'">
           <a-space wrap>
@@ -64,6 +64,12 @@
         </template>
         <template v-if="column.dataIndex === 'createTime'">
           {{ dayjs(record.createTime).format('YYYY-MM-DD HH:mm:ss') }}
+        </template>
+        <template v-if="column.dataIndex === 'reviewStatus'">
+            <div v-if="record.reviewStatus === 0">待审核</div>
+            <div v-else-if="record.reviewStatus === 1 ">审核通过</div>
+            <div v-else-if="record.reviewStatus === 2 ">审核驳回</div>
+            <div v-else-if="record.reviewStatus === 3 ">违规下架</div>
         </template>
 
         <template v-else-if="column.key === 'action'">
@@ -130,13 +136,17 @@ const columns = [
     dataIndex: 'picInfo',
   },
   {
-    title: '用户 id',
+    title: ' 上传者id',
     dataIndex: 'userId',
     width: 80,
   },
   {
     title: '创建时间',
     dataIndex: 'createTime',
+  },
+  {
+    title: '图片状态',
+    dataIndex: 'reviewStatus',
   },
   {
     title: '操作',
@@ -213,7 +223,7 @@ const doSearch = () => {
   fetchDataList()
 }
 
-//删除用户
+//删除图片
 const doDelete = async (id: string) => {
   if (!id) {
     message.error('删除失败')
