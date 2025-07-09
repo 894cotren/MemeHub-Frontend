@@ -280,6 +280,7 @@ declare namespace API {
     category?: string
     id?: number
     introduction?: string
+    isFavorite?: boolean
     picName?: string
     picUrl?: string
     tags?: string[]

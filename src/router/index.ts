@@ -6,6 +6,7 @@ import UserRegisterPage from '@/pages/user/UserRegisterPage.vue'
 import AddPicturePage from '@/pages/picture/AddPicturePage.vue'
 import PictureManagePage from '@/pages/admin/PictureManagePage.vue'
 import PictureShowPage from '@/pages/picture/PictureShowPage.vue'
+import FavoritePicturePage from '@/pages/picture/FavoritePicturePage.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -44,6 +45,11 @@ const router = createRouter({
       path: '/pictureShow',
       name: 'meme图库',
       component: PictureShowPage,
+    },
+    {
+      path: '/favoritePicture',
+      name: '图片收藏',
+      component: FavoritePicturePage,
     },
   ],
 })

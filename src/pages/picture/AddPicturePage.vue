@@ -1,7 +1,7 @@
 <template>
   <div id="addPicture">
     <!-- 标题   -->
-    <h2 style="margin-bottom: 16px">
+    <h2 style="margin-bottom: 16px ;text-align: center">
       {{ route.query?.id ? '修改图片' : '创建图片' }}
     </h2>
     <!--    图片上传-->

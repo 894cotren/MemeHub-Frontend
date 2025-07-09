@@ -8,7 +8,8 @@ import vueDevTools from 'vite-plugin-vue-devtools'
 export default defineConfig({
   plugins: [
     vue(),
-    vueDevTools(),
+    /* 下面这个会显示在网页下端的工具按钮哦
+    vueDevTools(),*/
   ],
   resolve: {
     alias: {

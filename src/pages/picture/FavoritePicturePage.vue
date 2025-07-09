@@ -1,36 +1,7 @@
 
 <template>
-  <div id="pictureShowPage">
-        <!-- 搜索区域 -->
-    <div class="search-section">
-      <a-row :gutter="[16, 16]" justify="center" align="middle" class="search-row">
-        <a-col :xs="24" :sm="24" :md="4" :lg="3" class="category-col">
-          <a-select
-            v-model:value="searchForm.category"
-            placeholder="全部分类"
-            allow-clear
-            size="default"
-            @change="handleSearch"
-          >
-            <a-select-option value="">全部分类</a-select-option>
-            <a-select-option value="二次元">二次元</a-select-option>
-            <a-select-option value="日常">日常</a-select-option>
-            <a-select-option value="地狱">地狱</a-select-option>
-            <a-select-option value="其他">其他</a-select-option>
-          </a-select>
-        </a-col>
-        <a-col :xs="24" :sm="24" :md="16" :lg="12" class="search-col">
-          <a-input-search
-            v-model:value="searchForm.searchText"
-            placeholder="搜索图片..."
-            enter-button="搜索"
-            size="default"
-            @search="handleSearch"
-            @input="handleSearchInput"
-          />
-        </a-col>
-      </a-row>
-    </div>
+  <div id="favoritePicturePage">
+    <h2 style="margin-bottom: 16px ;text-align: center">我的收藏</h2>
 
     <!-- 加载状态 -->
     <div v-if="loading" class="loading-container">
@@ -83,7 +54,13 @@
 
       <!-- 无数据提示 -->
       <div v-if="!loading && pictureList.length === 0" class="no-data">
-        <a-empty description="暂无图片数据" />
+        <a-empty description="您还没有收藏任何图片">
+          <template #image>
+            <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/>
+            </svg>
+          </template>
+        </a-empty>
       </div>
     </div>
 
@@ -100,7 +77,7 @@
       />
     </div>
 
-        <!-- 图片预览模态框 -->
+    <!-- 图片预览模态框 -->
     <a-modal
       v-model:open="previewVisible"
       :footer="null"
@@ -131,41 +108,41 @@
           </div>
         </div>
 
-                  <!-- 图片显示区域 -->
-          <div class="preview-image-container" @click="closePreview">
-            <!-- 左侧导航按钮 -->
-            <a-button
-              v-if="currentPictureIndex > 0"
-              class="nav-btn nav-btn-left"
-              type="text"
-              @click.stop="prevPicture"
-            >
-              ‹
-            </a-button>
+        <!-- 图片显示区域 -->
+        <div class="preview-image-container" @click="closePreview">
+          <!-- 左侧导航按钮 -->
+          <a-button
+            v-if="currentPictureIndex > 0"
+            class="nav-btn nav-btn-left"
+            type="text"
+            @click.stop="prevPicture"
+          >
+            ‹
+          </a-button>
 
-            <!-- 图片 -->
-            <img
-              :src="currentPicture.picUrl"
-              :alt="currentPicture.picName || '图片'"
-              class="preview-image"
-              @click.stop
-            />
+          <!-- 图片 -->
+          <img
+            :src="currentPicture.picUrl"
+            :alt="currentPicture.picName || '图片'"
+            class="preview-image"
+            @click.stop
+          />
 
-            <!-- 右侧导航按钮 -->
-            <a-button
-              v-if="currentPictureIndex < pictureList.length - 1"
-              class="nav-btn nav-btn-right"
-              type="text"
-              @click.stop="nextPicture"
-            >
-              ›
-            </a-button>
-          </div>
+          <!-- 右侧导航按钮 -->
+          <a-button
+            v-if="currentPictureIndex < pictureList.length - 1"
+            class="nav-btn nav-btn-right"
+            type="text"
+            @click.stop="nextPicture"
+          >
+            ›
+          </a-button>
+        </div>
 
         <!-- 图片信息区域 -->
         <div class="preview-info" v-if="currentPicture.userName">
           <p class="author-info">
-            贡献者：{{ currentPicture.userName }}
+            作者：{{ currentPicture.userName }}
           </p>
         </div>
 
@@ -191,9 +168,9 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, onMounted, onUnmounted } from 'vue'
+import { ref, onMounted, onUnmounted } from 'vue'
 import { message } from 'ant-design-vue'
-import { getPicturePagesVoUsingPost, userFavoritePictureUsingPost, userUnfavoritePictureUsingPost } from '@/api/pictureController'
+import { getFavoritePicturePagesUsingPost, userUnfavoritePictureUsingPost, userFavoritePictureUsingPost } from '@/api/pictureController'
 import { useLoginUserStore } from '@/stores/userLoginUserStore'
 
 // 响应式数据
@@ -211,40 +188,37 @@ const currentPictureIndex = ref(0)
 const loginUserStore = useLoginUserStore()
 const { loginUser } = loginUserStore
 
-// 搜索表单
-const searchForm = reactive<API.PictureVOPagesRequest>({
-  searchText: '',
-  category: '',
-  pageNum: 1,
-  pageSize: 12,
-  sortField: 'createTime',
-  sortOrder: 'desc'
-})
-
-// 获取图片列表
-const fetchPictureList = async () => {
+// 获取收藏图片列表
+const fetchFavoritePictureList = async () => {
   try {
     loading.value = true
 
-    const requestParams: API.PictureVOPagesRequest = {
-      ...searchForm,
-      pageNum: currentPage.value,
-      pageSize: pageSize.value
+    if (!loginUser?.id) {
+      message.warning('请先登录后查看收藏')
+      return
     }
 
-        const response = await getPicturePagesVoUsingPost(requestParams)
+    const requestParams = {
+      pageNum: currentPage.value,
+      pageSize: pageSize.value,
+      sortField: 'createTime',
+      sortOrder: 'desc',
+      userId: loginUser.id
+    }
+
+    const response = await getFavoritePicturePagesUsingPost(requestParams)
 
     if (response.data?.code === 20000 && response.data?.data) {
       pictureList.value = response.data.data.records || []
       total.value = parseInt(String(response.data.data.total || 0)) || 0
     } else {
-      message.error(response.data?.message || '获取图片列表失败')
+      message.error(response.data?.message || '获取收藏图片列表失败')
       pictureList.value = []
       total.value = 0
     }
   } catch (error) {
-    console.error('获取图片列表失败:', error)
-    message.error('获取图片列表失败，请稍后重试')
+    console.error('获取收藏图片列表失败:', error)
+    message.error('获取收藏图片列表失败，请稍后重试')
     pictureList.value = []
     total.value = 0
   } finally {
@@ -252,25 +226,10 @@ const fetchPictureList = async () => {
   }
 }
 
-// 搜索处理
-const handleSearch = () => {
-  currentPage.value = 1
-  fetchPictureList()
-}
-
-// 搜索输入处理（防抖）
-let searchTimeout: number
-const handleSearchInput = () => {
-  clearTimeout(searchTimeout)
-  searchTimeout = setTimeout(() => {
-    handleSearch()
-  }, 500)
-}
-
 // 分页变化处理
 const handlePageChange = (page: number) => {
   currentPage.value = page
-  fetchPictureList()
+  fetchFavoritePictureList()
   // 滚动到页面顶部
   window.scrollTo({ top: 0, behavior: 'smooth' })
 }
@@ -353,7 +312,7 @@ const toggleFavorite = async (picture: API.PicturePagesVO, event?: Event) => {
 
   // 检查用户是否已登录
   if (!loginUser?.id) {
-    message.warning('请先登录后再收藏图片')
+    message.warning('请先登录后再操作收藏')
     return
   }
 
@@ -371,11 +330,34 @@ const toggleFavorite = async (picture: API.PicturePagesVO, event?: Event) => {
       if (response.data?.code === 20000 && response.data?.data) {
         picture.isFavorite = false
         message.success('取消收藏成功')
+
+        // 从收藏列表中移除该图片
+        const index = pictureList.value.findIndex(p => p.id === picture.id)
+        if (index !== -1) {
+          pictureList.value.splice(index, 1)
+          total.value = Math.max(0, total.value - 1)
+
+          // 如果当前页没有图片了，且不是第一页，则回到上一页
+          if (pictureList.value.length === 0 && currentPage.value > 1) {
+            currentPage.value--
+            fetchFavoritePictureList()
+          }
+
+          // 如果在预览模式下，需要调整当前图片索引
+          if (previewVisible.value && currentPictureIndex.value >= pictureList.value.length) {
+            if (pictureList.value.length === 0) {
+              closePreview()
+            } else {
+              currentPictureIndex.value = Math.max(0, pictureList.value.length - 1)
+              currentPicture.value = pictureList.value[currentPictureIndex.value]
+            }
+          }
+        }
       } else {
         message.error(response.data?.message || '取消收藏失败')
       }
     } else {
-      // 收藏图片
+      // 重新收藏（一般不会发生，因为这里都是收藏的图片）
       const response = await userFavoritePictureUsingPost({
         picId: picId,
         userId: userId
@@ -394,13 +376,11 @@ const toggleFavorite = async (picture: API.PicturePagesVO, event?: Event) => {
   }
 }
 
-
-
 // 页面挂载时获取数据
 onMounted(() => {
   // 获取用户登录状态
   loginUserStore.fetchLoginUser()
-  fetchPictureList()
+  fetchFavoritePictureList()
   document.addEventListener('keydown', handleKeyDown)
 })
 
@@ -410,58 +390,14 @@ onUnmounted(() => {
   // 确保移除body的modal-open类
   document.body.classList.remove('modal-open')
 })
-
-
 </script>
 
 <style scoped>
-#pictureShowPage {
+#favoritePicturePage {
   min-height: 100vh;
   background: #fafafa;
-  padding: 0 20px;
+  padding: 30px 20px;
 }
-
-/* 页面头部 */
-.page-header {
-  text-align: center;
-  padding: 40px 0 30px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  margin: -20px -20px 30px -20px;
-  color: white;
-}
-
-.page-title {
-  font-size: 3rem;
-  font-weight: 700;
-  margin: 0;
-  text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
-}
-
-.page-subtitle {
-  font-size: 1.2rem;
-  margin: 10px 0 0 0;
-  opacity: 0.9;
-}
-
-/* 搜索区域 */
-.search-section {
-  background: white;
-  padding: 20px;
-  border-radius: 12px;
-  box-shadow: 0 4px 20px rgba(0,0,0,0.08);
-  margin-bottom: 15px;
-}
-
-.search-row {
-  margin: 0 !important;
-}
-
-.category-col,
-.search-col {
-  padding: 0 8px !important;
-}
-
-
 
 /* 加载状态 */
 .loading-container {
@@ -568,26 +504,10 @@ onUnmounted(() => {
   .favorite-btn {
     display: none !important; /* 移动端完全隐藏收藏按钮 */
   }
-
-  .heart-btn {
-    width: 36px !important;
-    height: 36px !important;
-  }
-
-  .favorite-icon {
-    width: 16px;
-    height: 16px;
-  }
 }
 
 .overlay-content {
   color: white;
-}
-
-.overlay-content h3 {
-  margin: 0 0 5px 0;
-  font-size: 1.1rem;
-  font-weight: 600;
 }
 
 .overlay-content p {
@@ -778,86 +698,6 @@ onUnmounted(() => {
   gap: 10px;
 }
 
-.preview-heart-btn {
-  color: white !important;
-  font-size: 24px;
-  font-weight: bold;
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.3s ease;
-}
-
-.preview-heart-btn:hover {
-  background: rgba(255, 255, 255, 0.2) !important;
-  transform: scale(1.1);
-}
-
-.preview-heart-btn.favorited {
-  background: rgba(255, 255, 255, 0.1) !important;
-}
-
-.preview-heart-btn .favorite-icon {
-  width: 24px;
-  height: 24px;
-  color: white;
-}
-
-.preview-heart-btn.favorited .favorite-icon {
-  color: #1890ff;
-}
-
-/* 固定在屏幕右下角的收藏按钮 */
-.preview-favorite-btn {
-  position: fixed;
-  bottom: 20px;
-  right: 20px;
-  z-index: 1004;
-  opacity: 0.9;
-  transition: opacity 0.3s ease;
-}
-
-.preview-favorite-btn:hover {
-  opacity: 1;
-}
-
-.preview-favorite-btn .preview-heart-btn {
-  background: rgba(0, 0, 0, 0.6) !important;
-  border: none !important;
-  color: white !important;
-  width: 50px !important;
-  height: 50px !important;
-  border-radius: 50% !important;
-  display: flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-  backdrop-filter: blur(5px);
-  transition: all 0.3s ease !important;
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.3) !important;
-}
-
-.preview-favorite-btn .preview-heart-btn:hover {
-  background: rgba(0, 0, 0, 0.8) !important;
-  transform: scale(1.1) !important;
-}
-
-.preview-favorite-btn .preview-heart-btn.favorited {
-  background: rgba(0, 0, 0, 0.8) !important;
-}
-
-.preview-favorite-btn .favorite-icon {
-  width: 24px;
-  height: 24px;
-  color: white;
-}
-
-.preview-favorite-btn .preview-heart-btn.favorited .favorite-icon {
-  color: #1890ff;
-}
-
 .preview-counter {
   font-size: 14px;
   font-weight: 500;
@@ -976,33 +816,65 @@ onUnmounted(() => {
   opacity: 0.9;
 }
 
+/* 固定在屏幕右下角的收藏按钮 */
+.preview-favorite-btn {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  z-index: 1004;
+  opacity: 0.9;
+  transition: opacity 0.3s ease;
+}
+
+.preview-favorite-btn:hover {
+  opacity: 1;
+}
+
+.preview-favorite-btn .preview-heart-btn {
+  background: rgba(0, 0, 0, 0.6) !important;
+  border: none !important;
+  color: white !important;
+  width: 50px !important;
+  height: 50px !important;
+  border-radius: 50% !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  backdrop-filter: blur(5px);
+  transition: all 0.3s ease !important;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.3) !important;
+}
+
+.preview-favorite-btn .preview-heart-btn:hover {
+  background: rgba(0, 0, 0, 0.8) !important;
+  transform: scale(1.1) !important;
+}
+
+.preview-favorite-btn .preview-heart-btn.favorited {
+  background: rgba(0, 0, 0, 0.8) !important;
+}
+
+.preview-favorite-btn .favorite-icon {
+  width: 24px;
+  height: 24px;
+  color: white;
+}
+
+.preview-favorite-btn .preview-heart-btn.favorited .favorite-icon {
+  color: #1890ff;
+}
+
 /* 响应式设计 */
 @media (max-width: 768px) {
-  .page-title {
-    font-size: 2rem;
-  }
-
   .grid-container {
     grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
     gap: 10px;
     padding: 0 2px;
   }
-
-  .search-section {
-    padding: 15px;
-  }
-
-  .category-col {
-    margin-bottom: 10px;
-  }
-
-  .search-col {
-    margin-bottom: 0;
-  }
 }
 
 @media (max-width: 600px) {
-  #pictureShowPage {
+  #favoritePicturePage {
     padding: 0 5px;
   }
 
@@ -1022,64 +894,8 @@ onUnmounted(() => {
     min-height: 200px;
     border-radius: 4px;
   }
-}
-
-@media (max-width: 480px) {
-  #pictureShowPage {
-    padding: 0 3px;
-  }
-
-  .grid-container {
-    grid-template-columns: 1fr;
-    gap: 6px;
-    padding: 0;
-  }
-
-  .picture-card {
-    border-radius: 2px;
-    max-width: 100%;
-  }
-
-  .image-container {
-    height: auto;
-    min-height: 150px;
-    border-radius: 2px;
-  }
-
-  .search-section {
-    padding: 8px;
-    margin-bottom: 15px;
-  }
-
-  .category-col,
-  .search-col {
-    padding: 0 3px !important;
-  }
-
-  .category-col {
-    margin-bottom: 6px;
-  }
-
-  /* 移动端收藏按钮样式 */
-  .favorite-btn {
-    display: none !important; /* 移动端完全隐藏收藏按钮 */
-  }
 
   /* 移动端预览样式 */
-  .preview-image-container {
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    width: 100vw;
-    height: 100vh;
-    padding: 0;
-    margin: 0;
-    box-sizing: border-box;
-    overflow: hidden;
-  }
-
   .preview-image {
     max-width: calc(100vw - 20px);
     max-height: calc(100vh - 120px);
@@ -1115,16 +931,6 @@ onUnmounted(() => {
     z-index: 1003;
   }
 
-  .preview-heart-btn {
-    width: 36px;
-    height: 36px;
-  }
-
-  .preview-heart-btn .favorite-icon {
-    width: 20px;
-    height: 20px;
-  }
-
   /* 移动端预览收藏按钮样式 */
   .preview-favorite-btn {
     bottom: 15px;
@@ -1155,6 +961,29 @@ onUnmounted(() => {
   .pagination-container {
     padding: 15px 0;
     margin-top: 10px;
+  }
+}
+
+@media (max-width: 480px) {
+  #favoritePicturePage {
+    padding: 0 3px;
+  }
+
+  .grid-container {
+    grid-template-columns: 1fr;
+    gap: 6px;
+    padding: 0;
+  }
+
+  .picture-card {
+    border-radius: 2px;
+    max-width: 100%;
+  }
+
+  .image-container {
+    height: auto;
+    min-height: 150px;
+    border-radius: 2px;
   }
 }
 </style>
