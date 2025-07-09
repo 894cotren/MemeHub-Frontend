@@ -20,7 +20,7 @@ import GlobalHeader from '@/components/GlobalHeader.vue'
 #basicLayout .footer {
   background: #efefef;
   padding: 16px;
-  position: fixed;
+  /*position: fixed;*/
   bottom: 0;
   left: 0;
   right: 0;
@@ -34,7 +34,7 @@ import GlobalHeader from '@/components/GlobalHeader.vue'
 }
 #basicLayout .header {
   padding-inline: 20px;
-  margin-bottom: 16px;
+/*  margin-bottom: 0px;*/
   color: unset;
   background: white;
 }

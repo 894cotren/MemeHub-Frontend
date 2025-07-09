@@ -19,7 +19,7 @@
       </a-col>
 
       <!-- 用户信息展示栏     -->
-      <a-col flex="200px">
+      <a-col flex="100px">
         <div class="user-login-status">
           <div v-if="loginUserStore.loginUser.id">
             <a-dropdown>
