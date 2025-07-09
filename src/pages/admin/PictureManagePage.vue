@@ -21,6 +21,16 @@
           allow-clear
         />
       </a-form-item>
+      <a-form-item label="创建时间" name="timeRange">
+        <a-range-picker
+          v-model:value="searchParams.timeRange"
+          style="width: 240px"
+          placeholder="['开始时间', '结束时间']"
+          format="YYYY-MM-DD HH:mm:ss"
+          show-time
+          allow-clear
+        />
+      </a-form-item>
       <a-form-item>
         <a-button type="primary" html-type="submit">搜索</a-button>
       </a-form-item>
@@ -81,6 +91,12 @@ import { computed, onMounted, reactive, ref } from 'vue'
 import { message } from 'ant-design-vue'
 import dayjs, { Dayjs } from 'dayjs'
 import { deletePictureByIdUsingPost, getPicturePagesUsingPost } from '@/api/pictureController'
+
+// 扩展搜索参数类型，添加前端需要的时间范围字段
+interface ExtendedSearchParams extends API.PicturePagesRequest {
+  timeRange?: [Dayjs, Dayjs] | undefined
+}
+
 /*需要展示的列*/
 const columns = [
   {
@@ -132,10 +148,13 @@ const columns = [
 const dataList = ref<API.Picture[]>([])
 const total = ref(0)
 
-//定义分页搜索条件 （给我们后端用的）
-const searchParams = reactive<API.PicturePagesRequest>({
+//定义分页搜索条件 （下面类型是给我们后端用的,cursor生成继承了我们的PicturePagesRequest）
+const searchParams = reactive<ExtendedSearchParams>({
   pageNum: 1,
   pageSize: 8,
+  sortField: 'create_time',
+  sortOrder: 'descend',
+  timeRange: undefined,
 })
 
 //  分页参数对象-放组件里的。组件里的api
@@ -159,10 +178,22 @@ const doTableChange = (pages: any) => {
 
 //定义查询函数
 const fetchDataList = async () => {
-  const res = await getPicturePagesUsingPost({
-    //将这个对象展开形成一个新的对象，免得污染该分页对象
+  // 处理时间范围参数
+  const requestParams: any = {
     ...searchParams,
-  })
+  }
+
+  // 如果有时间范围，转换为后端需要的格式
+  if (searchParams.timeRange && searchParams.timeRange.length === 2) {
+    // 发送 ISO 8601 格式的时间字符串
+    requestParams.startTime = searchParams.timeRange[0].toISOString()
+    requestParams.endTime = searchParams.timeRange[1].toISOString()
+  }
+
+  // 删除前端用的时间范围字段
+  delete requestParams.timeRange
+
+  const res = await getPicturePagesUsingPost(requestParams)
   if (res.data.code === 20000 && res.data.data) {
     dataList.value = res.data.data.records ?? []
     total.value = res.data.data.total ?? 0
