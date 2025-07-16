@@ -288,6 +288,12 @@ declare namespace API {
     userName?: string
   }
 
+  type PictureReviewRequest = {
+    id?: number
+    reviewMessage?: string
+    reviewStatus?: number
+  }
+
   type PictureTagCategoryVO = {
     categoryList?: string[]
     tagList?: string[]
@@ -299,8 +305,6 @@ declare namespace API {
     introduction?: string
     picName?: string
     picUrl?: string
-    reviewMessage?: string
-    reviewStatus?: number
     tags?: string[]
   }
 

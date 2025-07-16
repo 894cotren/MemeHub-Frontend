@@ -79,10 +79,80 @@
           {{ dayjs(record.createTime).format('YYYY-MM-DD HH:mm:ss') }}
         </template>
         <template v-if="column.dataIndex === 'reviewStatus'">
-            <div v-if="record.reviewStatus === 0">待审核</div>
-            <div v-else-if="record.reviewStatus === 1 ">审核通过</div>
-            <div v-else-if="record.reviewStatus === 2 ">审核驳回</div>
-            <div v-else-if="record.reviewStatus === 3 ">违规下架</div>
+            <div v-if="record.reviewStatus === 0">
+              待审核
+              <div v-if="record.reviewerId" style="font-size: 12px; color: #666;">审核人ID: {{ record.reviewerId }}</div>
+            </div>
+            <div v-else-if="record.reviewStatus === 1 ">
+              审核通过
+              <div v-if="record.reviewerId" style="font-size: 12px; color: #666;">审核人ID: {{ record.reviewerId }}</div>
+            </div>
+            <div v-else-if="record.reviewStatus === 2 ">
+              审核驳回
+              <div v-if="record.reviewerId" style="font-size: 12px; color: #666;">审核人ID: {{ record.reviewerId }}</div>
+            </div>
+            <div v-else-if="record.reviewStatus === 3 ">
+              违规下架
+              <div v-if="record.reviewerId" style="font-size: 12px; color: #666;">审核人ID: {{ record.reviewerId }}</div>
+            </div>
+        </template>
+
+        <template v-else-if="column.key === 'review'">
+          <!-- 审核按钮 -->
+          <template v-if="record.reviewStatus === 0">
+            <!-- 待审核状态：显示审核通过和审核驳回按钮 -->
+            <a-button 
+              type="primary" 
+              size="small" 
+              @click="showReviewModal(record, 1)"
+              style="margin-right: 8px;"
+            >
+              通过
+            </a-button>
+            <a-button 
+              type="primary" 
+              danger 
+              size="small" 
+              @click="showReviewModal(record, 2)"
+              style="margin-right: 8px;"
+            >
+              驳回
+            </a-button>
+          </template>
+          <template v-else-if="record.reviewStatus === 1">
+            <!-- 审核通过状态：显示下架按钮 -->
+            <a-button 
+              type="primary" 
+              danger 
+              size="small" 
+              @click="showReviewModal(record, 3)"
+              style="margin-right: 8px;"
+            >
+              下架
+            </a-button>
+          </template>
+          <template v-else-if="record.reviewStatus === 2">
+            <!-- 审核驳回状态：显示重新审核按钮 -->
+            <a-button 
+              type="primary" 
+              size="small" 
+              @click="showReviewModal(record, 1)"
+              style="margin-right: 8px;"
+            >
+              重新审核
+            </a-button>
+          </template>
+          <template v-else-if="record.reviewStatus === 3">
+            <!-- 违规下架状态：显示恢复按钮 -->
+            <a-button 
+              type="primary" 
+              size="small" 
+              @click="showReviewModal(record, 1)"
+              style="margin-right: 8px;"
+            >
+              恢复
+            </a-button>
+          </template>
         </template>
 
         <template v-else-if="column.key === 'action'">
@@ -90,6 +160,7 @@
           <a-button type="link" :href="`/addPicture?id=${record.id}`" target="_blank"
             >编辑</a-button
           >
+          
           <!--          图片删除按钮-->
           <a-popconfirm
             title="你确认要删除该图片吗?"
@@ -98,18 +169,57 @@
             @confirm="doDelete(record.id)"
             @cancel="cancelDelete"
           >
-            <a-button danger>删除</a-button>
+            <a-button danger size="small">删除</a-button>
           </a-popconfirm>
         </template>
       </template>
     </a-table>
+    
+    <!-- 审核模态框 -->
+    <a-modal
+      v-model:open="reviewModalVisible"
+      title="图片审核"
+      @ok="handleReviewSubmit"
+      @cancel="handleReviewCancel"
+      :confirm-loading="reviewSubmitting"
+    >
+      <div v-if="currentReviewPicture">
+        <div style="margin-bottom: 16px;">
+          <a-image :src="currentReviewPicture.picUrl" :width="200" />
+        </div>
+        <div style="margin-bottom: 16px;">
+          <strong>图片名称：</strong>{{ currentReviewPicture.picName }}
+        </div>
+        <div style="margin-bottom: 16px;">
+          <strong>当前状态：</strong>
+          <span v-if="currentReviewPicture.reviewStatus === 0">待审核</span>
+          <span v-else-if="currentReviewPicture.reviewStatus === 1">审核通过</span>
+          <span v-else-if="currentReviewPicture.reviewStatus === 2">审核驳回</span>
+          <span v-else-if="currentReviewPicture.reviewStatus === 3">违规下架</span>
+        </div>
+        <div style="margin-bottom: 16px;">
+          <strong>审核操作：</strong>
+          <span v-if="currentReviewStatus === 1" style="color: #52c41a;">审核通过</span>
+          <span v-else-if="currentReviewStatus === 2" style="color: #f5222d;">审核驳回</span>
+          <span v-else-if="currentReviewStatus === 3" style="color: #f5222d;">违规下架</span>
+        </div>
+        <a-form-item label="审核信息">
+          <a-textarea
+            v-model:value="reviewMessage"
+            placeholder="请输入审核信息（可选）"
+            :rows="4"
+            :maxlength="500"
+          />
+        </a-form-item>
+      </div>
+    </a-modal>
   </div>
 </template>
 <script lang="ts" setup>
 import { computed, onMounted, reactive, ref } from 'vue'
 import { message } from 'ant-design-vue'
 import dayjs, { Dayjs } from 'dayjs'
-import { deletePictureByIdUsingPost, getPicturePagesUsingPost } from '@/api/pictureController'
+import { deletePictureByIdUsingPost, getPicturePagesUsingPost, doPictureReviewUsingPost } from '@/api/pictureController'
 
 // 扩展搜索参数类型，添加前端需要的时间范围字段
 interface ExtendedSearchParams extends API.PicturePagesRequest {
@@ -162,8 +272,14 @@ const columns = [
     dataIndex: 'reviewStatus',
   },
   {
+    title: '审核',
+    key: 'review',
+    width: 120,
+  },
+  {
     title: '操作',
     key: 'action',
+    width: 120,
   },
 ]
 
@@ -179,6 +295,13 @@ const searchParams = reactive<ExtendedSearchParams>({
   sortOrder: 'descend',
   timeRange: undefined,
 })
+
+// 审核相关的响应式数据
+const reviewModalVisible = ref(false)
+const reviewSubmitting = ref(false)
+const currentReviewPicture = ref<API.Picture | null>(null)
+const currentReviewStatus = ref<number>(0)
+const reviewMessage = ref('')
 
 //  分页参数对象-放组件里的。组件里的api
 const pagination = computed(() => {
@@ -236,13 +359,60 @@ const doSearch = () => {
   fetchDataList()
 }
 
+// 显示审核模态框
+const showReviewModal = (picture: API.Picture, reviewStatus: number) => {
+  currentReviewPicture.value = picture
+  currentReviewStatus.value = reviewStatus
+  reviewMessage.value = ''
+  reviewModalVisible.value = true
+}
+
+// 处理审核提交
+const handleReviewSubmit = async () => {
+  if (!currentReviewPicture.value) {
+    message.error('审核信息错误')
+    return
+  }
+
+  reviewSubmitting.value = true
+  
+  try {
+    const res = await doPictureReviewUsingPost({
+      id: currentReviewPicture.value.id,
+      reviewStatus: currentReviewStatus.value,
+      reviewMessage: reviewMessage.value || undefined,
+    })
+    
+    if (res.data.code === 20000) {
+      message.success('审核成功')
+      reviewModalVisible.value = false
+      // 刷新数据
+      await fetchDataList()
+    } else {
+      message.error('审核失败：' + res.data.message)
+    }
+  } catch (error) {
+    message.error('审核失败')
+  } finally {
+    reviewSubmitting.value = false
+  }
+}
+
+// 取消审核
+const handleReviewCancel = () => {
+  reviewModalVisible.value = false
+  currentReviewPicture.value = null
+  currentReviewStatus.value = 0
+  reviewMessage.value = ''
+}
+
 //删除图片
 const doDelete = async (id: string) => {
   if (!id) {
     message.error('删除失败')
     return
   }
-  const res = await deletePictureByIdUsingPost({ id })
+  const res = await deletePictureByIdUsingPost({ id: parseInt(id) })
   if (res.data.code === 20000) {
     message.success('删除成功')
     //更新数据

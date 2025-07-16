@@ -115,6 +115,21 @@ export async function getTagCategoryListUsingGet(options?: { [key: string]: any 
   })
 }
 
+/** doPictureReview POST /api/picture/pictureReview */
+export async function doPictureReviewUsingPost(
+  body: API.PictureReviewRequest,
+  options?: { [key: string]: any }
+) {
+  return request<API.BaseResponseBoolean_>('/api/picture/pictureReview', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    data: body,
+    ...(options || {}),
+  })
+}
+
 /** userUnfavoritePicture POST /api/picture/unfavoritePicture */
 export async function userUnfavoritePictureUsingPost(
   // 叠加生成的Param类型 (非body参数swagger默认没有生成对象)
