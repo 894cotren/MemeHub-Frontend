@@ -120,6 +120,35 @@
             {{ currentPictureIndex + 1 }} / {{ pictureList.length }}
           </div>
           <div class="preview-actions">
+            <!-- 缩放控制按钮 -->
+            <div class="zoom-controls">
+              <a-button
+                type="text"
+                @click="zoomOut"
+                class="zoom-btn"
+                title="缩小"
+              >
+                -
+              </a-button>
+              <span class="zoom-ratio">{{ Math.round(imageScale * 100) }}%</span>
+              <a-button
+                type="text"
+                @click="zoomIn"
+                class="zoom-btn"
+                title="放大"
+              >
+                +
+              </a-button>
+              <a-button
+                type="text"
+                @click="resetZoom"
+                class="reset-btn"
+                title="重置"
+              >
+                重置
+              </a-button>
+            </div>
+
             <!-- 关闭按钮 -->
             <a-button
               type="text"
@@ -131,36 +160,47 @@
           </div>
         </div>
 
-                  <!-- 图片显示区域 -->
-          <div class="preview-image-container" @click="closePreview">
-            <!-- 左侧导航按钮 -->
-            <a-button
-              v-if="currentPictureIndex > 0"
-              class="nav-btn nav-btn-left"
-              type="text"
-              @click.stop="prevPicture"
-            >
-              ‹
-            </a-button>
+        <!-- 图片显示区域 -->
+        <div class="preview-image-container" @click="closePreview">
+          <!-- 左侧导航按钮 -->
+          <a-button
+            v-if="currentPictureIndex > 0"
+            class="nav-btn nav-btn-left"
+            type="text"
+            @click.stop="prevPicture"
+          >
+            ‹
+          </a-button>
 
-            <!-- 图片 -->
-            <img
-              :src="currentPicture.picUrl"
-              :alt="currentPicture.picName || '图片'"
-              class="preview-image"
-              @click.stop
-            />
+          <!-- 图片 -->
+          <img
+            :src="currentPicture.picUrl"
+            :alt="currentPicture.picName || '图片'"
+            class="preview-image"
+            :class="{
+              zoomed: imageScale > 1,
+              'can-drag': canDrag(),
+              'dragging': isDragging
+            }"
+            @click.stop
+            @mousedown="handleMouseDown"
+            @wheel="handleWheel"
+            @touchstart="handleTouchStart"
+            @touchmove="handleTouchMove"
+            @touchend="handleTouchEnd"
+            :style="{ transform: `translate(${imageTranslateX}px, ${imageTranslateY}px) scale(${imageScale})` }"
+          />
 
-            <!-- 右侧导航按钮 -->
-            <a-button
-              v-if="currentPictureIndex < pictureList.length - 1"
-              class="nav-btn nav-btn-right"
-              type="text"
-              @click.stop="nextPicture"
-            >
-              ›
-            </a-button>
-          </div>
+          <!-- 右侧导航按钮 -->
+          <a-button
+            v-if="currentPictureIndex < pictureList.length - 1"
+            class="nav-btn nav-btn-right"
+            type="text"
+            @click.stop="nextPicture"
+          >
+            ›
+          </a-button>
+        </div>
 
         <!-- 图片信息区域 -->
         <div class="preview-info" v-if="currentPicture.userName">
@@ -206,6 +246,29 @@ const pageSize = ref(12) // 固定每页12张图片
 const previewVisible = ref(false)
 const currentPicture = ref<API.PicturePagesVO | null>(null)
 const currentPictureIndex = ref(0)
+
+// 图片缩放和平移相关状态
+const imageScale = ref(1)
+const imageTranslateX = ref(0)
+const imageTranslateY = ref(0)
+const isDragging = ref(false)
+const lastMouseX = ref(0)
+const lastMouseY = ref(0)
+
+// 图片尺寸相关状态
+const imageNaturalWidth = ref(0)
+const imageNaturalHeight = ref(0)
+const imageDisplayWidth = ref(0)
+const imageDisplayHeight = ref(0)
+const containerWidth = ref(0)
+const containerHeight = ref(0)
+
+// 触摸事件处理 (移动端双指缩放)
+const lastTouchDistance = ref(0)
+const isTouching = ref(false)
+const isOneFingerDrag = ref(false)
+const lastTouchX = ref(0)
+const lastTouchY = ref(0)
 
 // 用户登录状态
 const loginUserStore = useLoginUserStore()
@@ -290,6 +353,8 @@ const closePreview = () => {
   previewVisible.value = false
   currentPicture.value = null
   currentPictureIndex.value = 0
+  // 重置缩放状态
+  resetZoom()
   // 恢复body滚动
   document.body.classList.remove('modal-open')
 }
@@ -299,6 +364,8 @@ const prevPicture = () => {
   if (currentPictureIndex.value > 0) {
     currentPictureIndex.value--
     currentPicture.value = pictureList.value[currentPictureIndex.value]
+    // 重置缩放状态
+    resetZoom()
   }
 }
 
@@ -307,7 +374,276 @@ const nextPicture = () => {
   if (currentPictureIndex.value < pictureList.value.length - 1) {
     currentPictureIndex.value++
     currentPicture.value = pictureList.value[currentPictureIndex.value]
+    // 重置缩放状态
+    resetZoom()
   }
+}
+
+// 重置缩放状态，确保图片严格居中
+const resetZoom = () => {
+  imageScale.value = 1
+  imageTranslateX.value = 0  // 严格左右居中
+  imageTranslateY.value = 0  // 严格上下居中
+  isDragging.value = false
+  isTouching.value = false
+  isOneFingerDrag.value = false
+  lastTouchDistance.value = 0
+  lastTouchX.value = 0
+  lastTouchY.value = 0
+
+  // 清理全局监听器
+  document.removeEventListener('mousemove', handleGlobalMouseMove)
+  document.removeEventListener('mouseup', handleGlobalMouseUp)
+}
+
+// 计算拖拽限制范围
+const calculateDragLimits = () => {
+  // 获取容器尺寸（预览区域）- 需要减去头部和底部UI区域的高度
+  const containerRect = {
+    width: window.innerWidth,
+    height: window.innerHeight - 100 // 减去头部(60px)和底部(40px)的UI区域
+  }
+
+  // 如果没有图片尺寸信息，使用默认值
+  if (!imageDisplayWidth.value || !imageDisplayHeight.value) {
+    return {
+      maxTranslateX: 0,
+      maxTranslateY: 0,
+      minTranslateX: 0,
+      minTranslateY: 0
+    }
+  }
+
+  // 计算图片在当前缩放比例下的实际尺寸
+  const scaledWidth = imageDisplayWidth.value * imageScale.value
+  const scaledHeight = imageDisplayHeight.value * imageScale.value
+
+  // 计算可拖拽的最大范围
+  // 为了让图片可以完全滑动查看，在垂直方向上增加额外的空间
+  const maxTranslateX = Math.max(0, (scaledWidth - containerRect.width) / 2)
+  const maxTranslateY = Math.max(0, (scaledHeight - containerRect.height) / 2 + 50) // 上下各增加50px的滑动空间
+
+  return {
+    maxTranslateX,
+    maxTranslateY,
+    minTranslateX: -maxTranslateX,
+    minTranslateY: -maxTranslateY,
+    scaledWidth,
+    scaledHeight,
+    containerWidth: containerRect.width,
+    containerHeight: containerRect.height
+  }
+}
+
+// 应用拖拽限制
+const applyDragLimits = () => {
+  const limits = calculateDragLimits()
+
+  // 限制X方向的移动 - 严格左右居中
+  if (limits.maxTranslateX <= 5) { // 给一些容错空间
+    imageTranslateX.value = 0 // 图片宽度基本没有超出容器，严格居中显示
+  } else {
+    imageTranslateX.value = Math.max(
+      limits.minTranslateX,
+      Math.min(limits.maxTranslateX, imageTranslateX.value)
+    )
+  }
+
+  // 限制Y方向的移动
+  if (limits.maxTranslateY <= 5) { // 给一些容错空间
+    imageTranslateY.value = 0 // 图片高度基本没有超出容器，严格居中显示
+  } else {
+    imageTranslateY.value = Math.max(
+      limits.minTranslateY,
+      Math.min(limits.maxTranslateY, imageTranslateY.value)
+    )
+  }
+}
+
+// 鼠标滚轮缩放
+const handleWheel = (event: WheelEvent) => {
+  event.preventDefault()
+
+  const delta = event.deltaY > 0 ? -0.1 : 0.1
+  const newScale = Math.max(0.5, Math.min(3, imageScale.value + delta))
+
+  if (newScale !== imageScale.value) {
+    imageScale.value = newScale
+
+    // 如果缩放到原始大小，重置位置到严格居中
+    if (imageScale.value === 1) {
+      imageTranslateX.value = 0
+      imageTranslateY.value = 0
+    }
+
+    // 应用拖拽限制
+    applyDragLimits()
+  }
+}
+
+// 缩放控制
+const zoomIn = () => {
+  imageScale.value = Math.min(3, imageScale.value + 0.2)
+  applyDragLimits()
+}
+
+const zoomOut = () => {
+  imageScale.value = Math.max(0.5, imageScale.value - 0.2)
+
+  // 如果缩放到原始大小，重置位置到严格居中
+  if (imageScale.value === 1) {
+    imageTranslateX.value = 0
+    imageTranslateY.value = 0
+  }
+
+  // 应用拖拽限制
+  applyDragLimits()
+}
+
+// 检查图片是否超出屏幕，只有超出时才允许拖拽
+const canDrag = () => {
+  const limits = calculateDragLimits()
+  // 如果图片的缩放尺寸超出了容器，才允许拖拽
+  return limits.maxTranslateX > 5 || limits.maxTranslateY > 5
+}
+
+// 鼠标事件处理 (缩放和平移)
+const handleMouseDown = (event: MouseEvent) => {
+  if (event.button === 0) { // 只处理左键
+    // 只有当图片超出屏幕时才允许拖拽
+    if (!canDrag()) {
+      return
+    }
+
+    isDragging.value = true
+    lastMouseX.value = event.clientX
+    lastMouseY.value = event.clientY
+    event.preventDefault()
+
+    // 添加全局监听器
+    document.addEventListener('mousemove', handleGlobalMouseMove)
+    document.addEventListener('mouseup', handleGlobalMouseUp)
+  }
+}
+
+const handleGlobalMouseMove = (event: MouseEvent) => {
+  if (!isDragging.value) return
+
+  const deltaX = event.clientX - lastMouseX.value
+  const deltaY = event.clientY - lastMouseY.value
+
+  imageTranslateX.value += deltaX
+  imageTranslateY.value += deltaY
+
+  lastMouseX.value = event.clientX
+  lastMouseY.value = event.clientY
+
+  // 应用拖拽限制
+  applyDragLimits()
+
+  event.preventDefault()
+}
+
+const handleGlobalMouseUp = (event: MouseEvent) => {
+  if (event.button === 0) { // 只处理左键
+    isDragging.value = false
+
+    // 移除全局监听器
+    document.removeEventListener('mousemove', handleGlobalMouseMove)
+    document.removeEventListener('mouseup', handleGlobalMouseUp)
+  }
+}
+
+// 保持原有的方法名以免破坏模板绑定
+const handleMouseMove = (event: MouseEvent) => {
+  // 这个方法现在不需要做任何事情，因为拖拽由全局监听器处理
+}
+
+const handleMouseUp = () => {
+  // 这个方法现在不需要做任何事情，因为拖拽由全局监听器处理
+}
+
+const handleMouseLeave = () => {
+  // 这个方法现在不需要做任何事情，因为拖拽由全局监听器处理
+}
+
+const getTouchDistance = (touches: TouchList) => {
+  if (touches.length < 2) return 0
+
+  const touch1 = touches[0]
+  const touch2 = touches[1]
+
+  return Math.sqrt(
+    Math.pow(touch2.clientX - touch1.clientX, 2) +
+    Math.pow(touch2.clientY - touch1.clientY, 2)
+  )
+}
+
+const handleTouchStart = (event: TouchEvent) => {
+  if (event.touches.length === 2) {
+    isTouching.value = true
+    lastTouchDistance.value = getTouchDistance(event.touches)
+    event.preventDefault()
+  } else if (event.touches.length === 1) {
+    // 单指拖拽（仅在图片超出屏幕时）
+    if (canDrag()) {
+      isOneFingerDrag.value = true
+      lastTouchX.value = event.touches[0].clientX
+      lastTouchY.value = event.touches[0].clientY
+      event.preventDefault()
+    }
+  }
+}
+
+const handleTouchMove = (event: TouchEvent) => {
+  if (event.touches.length === 2 && isTouching.value) {
+    // 双指缩放
+    const currentDistance = getTouchDistance(event.touches)
+    const deltaDistance = currentDistance - lastTouchDistance.value
+
+    if (Math.abs(deltaDistance) > 10) {
+      const delta = deltaDistance > 0 ? 0.1 : -0.1
+      const newScale = Math.max(0.5, Math.min(3, imageScale.value + delta))
+
+      if (newScale !== imageScale.value) {
+        imageScale.value = newScale
+
+        // 如果缩放到原始大小，重置位置
+        if (imageScale.value === 1) {
+          imageTranslateX.value = 0
+          imageTranslateY.value = 0
+        }
+
+        // 应用拖拽限制
+        applyDragLimits()
+      }
+
+      lastTouchDistance.value = currentDistance
+    }
+
+    event.preventDefault()
+  } else if (event.touches.length === 1 && isOneFingerDrag.value) {
+    // 单指拖拽
+    const deltaX = event.touches[0].clientX - lastTouchX.value
+    const deltaY = event.touches[0].clientY - lastTouchY.value
+
+    imageTranslateX.value += deltaX
+    imageTranslateY.value += deltaY
+
+    lastTouchX.value = event.touches[0].clientX
+    lastTouchY.value = event.touches[0].clientY
+
+    // 应用拖拽限制
+    applyDragLimits()
+
+    event.preventDefault()
+  }
+}
+
+const handleTouchEnd = () => {
+  isTouching.value = false
+  isOneFingerDrag.value = false
+  lastTouchDistance.value = 0
 }
 
 // 键盘事件处理
@@ -327,6 +663,19 @@ const handleKeyDown = (event: KeyboardEvent) => {
       event.preventDefault()
       closePreview()
       break
+    case '=':
+    case '+':
+      event.preventDefault()
+      zoomIn()
+      break
+    case '-':
+      event.preventDefault()
+      zoomOut()
+      break
+    case '0':
+      event.preventDefault()
+      resetZoom()
+      break
   }
 }
 
@@ -334,6 +683,43 @@ const handleKeyDown = (event: KeyboardEvent) => {
 const handleImageLoad = (event: Event) => {
   const img = event.target as HTMLImageElement
   img.style.opacity = '1'
+
+  // 获取图片的自然尺寸
+  imageNaturalWidth.value = img.naturalWidth
+  imageNaturalHeight.value = img.naturalHeight
+
+  // 计算图片的实际显示尺寸
+  const containerWidth = window.innerWidth
+  const containerHeight = window.innerHeight
+
+  // 对于长图片，我们使用更宽松的显示逻辑
+  const maxDisplayWidth = containerWidth - 100
+  const maxDisplayHeight = containerHeight - 100
+
+  // 计算宽高比
+  const imageAspectRatio = imageNaturalWidth.value / imageNaturalHeight.value
+  const containerAspectRatio = maxDisplayWidth / maxDisplayHeight
+
+  // 检查是否为长图片（高度明显大于宽度）
+  const isLongImage = imageAspectRatio < 0.6 // 宽高比小于0.6认为是长图片
+
+  if (isLongImage) {
+    // 对于长图片，优先适应宽度，允许高度超出
+    const widthRatio = maxDisplayWidth / imageNaturalWidth.value
+    imageDisplayWidth.value = imageNaturalWidth.value * widthRatio
+    imageDisplayHeight.value = imageNaturalHeight.value * widthRatio
+  } else {
+    // 对于普通图片，保持原有逻辑
+    const widthRatio = maxDisplayWidth / imageNaturalWidth.value
+    const heightRatio = maxDisplayHeight / imageNaturalHeight.value
+    const displayRatio = Math.min(widthRatio, heightRatio)
+
+    imageDisplayWidth.value = imageNaturalWidth.value * displayRatio
+    imageDisplayHeight.value = imageNaturalHeight.value * displayRatio
+  }
+
+  // 应用拖拽限制
+  applyDragLimits()
 }
 
 // 图片加载失败处理
@@ -394,6 +780,39 @@ const toggleFavorite = async (picture: API.PicturePagesVO, event?: Event) => {
   }
 }
 
+// 添加窗口尺寸变化时的处理
+const handleWindowResize = () => {
+  // 重新计算图片显示尺寸
+  if (imageNaturalWidth.value && imageNaturalHeight.value) {
+    const containerWidth = window.innerWidth
+    const containerHeight = window.innerHeight
+
+    const maxDisplayWidth = containerWidth - 100
+    const maxDisplayHeight = containerHeight - 100
+
+    // 计算宽高比
+    const imageAspectRatio = imageNaturalWidth.value / imageNaturalHeight.value
+    const isLongImage = imageAspectRatio < 0.6
+
+    if (isLongImage) {
+      // 对于长图片，优先适应宽度
+      const widthRatio = maxDisplayWidth / imageNaturalWidth.value
+      imageDisplayWidth.value = imageNaturalWidth.value * widthRatio
+      imageDisplayHeight.value = imageNaturalHeight.value * widthRatio
+    } else {
+      // 对于普通图片，保持原有逻辑
+      const widthRatio = maxDisplayWidth / imageNaturalWidth.value
+      const heightRatio = maxDisplayHeight / imageNaturalHeight.value
+      const displayRatio = Math.min(widthRatio, heightRatio)
+
+      imageDisplayWidth.value = imageNaturalWidth.value * displayRatio
+      imageDisplayHeight.value = imageNaturalHeight.value * displayRatio
+    }
+  }
+
+  // 重新应用拖拽限制
+  applyDragLimits()
+}
 
 
 // 页面挂载时获取数据
@@ -402,6 +821,9 @@ onMounted(() => {
   loginUserStore.fetchLoginUser()
   fetchPictureList()
   document.addEventListener('keydown', handleKeyDown)
+
+  // 监听窗口大小变化
+  window.addEventListener('resize', handleWindowResize)
 })
 
 // 页面卸载时移除事件监听
@@ -409,6 +831,12 @@ onUnmounted(() => {
   document.removeEventListener('keydown', handleKeyDown)
   // 确保移除body的modal-open类
   document.body.classList.remove('modal-open')
+  // 清理全局监听器
+  document.removeEventListener('mousemove', handleGlobalMouseMove)
+  document.removeEventListener('mouseup', handleGlobalMouseUp)
+
+  // 移除窗口大小变化监听器
+  window.removeEventListener('resize', handleWindowResize)
 })
 
 
@@ -778,6 +1206,55 @@ onUnmounted(() => {
   gap: 10px;
 }
 
+.zoom-controls {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  background: rgba(0, 0, 0, 0.6);
+  padding: 5px 10px;
+  border-radius: 8px;
+  backdrop-filter: blur(5px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+.zoom-btn {
+  background: none !important;
+  border: none !important;
+  color: white !important;
+  font-size: 20px;
+  font-weight: bold;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+  opacity: 0.8;
+}
+
+.zoom-btn:hover {
+  background: rgba(255, 255, 255, 0.2) !important;
+  opacity: 1;
+}
+
+.reset-btn {
+  background: rgba(255, 255, 255, 0.2) !important;
+  border: none !important;
+  color: white !important;
+  font-size: 14px;
+  font-weight: 500;
+  padding: 5px 10px;
+  border-radius: 8px;
+  transition: all 0.3s ease;
+  opacity: 0.8;
+}
+
+.reset-btn:hover {
+  background: rgba(255, 255, 255, 0.3) !important;
+  opacity: 1;
+}
+
 .preview-heart-btn {
   color: white !important;
   font-size: 24px;
@@ -895,11 +1372,12 @@ onUnmounted(() => {
   margin: 0;
   box-sizing: border-box;
   overflow: hidden;
+  user-select: none;
 }
 
 .preview-image {
   max-width: calc(100vw - 120px);
-  max-height: calc(100vh - 140px);
+  max-height: calc(100vh - 100px);
   width: auto;
   height: auto;
   object-fit: contain;
@@ -911,8 +1389,27 @@ onUnmounted(() => {
   margin: 0;
   padding: 0;
   animation: none !important;
-  transition: none !important;
-  transform: none !important;
+  transition: transform 0.1s ease;
+  transform-origin: center center;
+  cursor: default;
+  user-select: none;
+  pointer-events: auto;
+}
+
+.preview-image.can-drag {
+  cursor: grab;
+}
+
+.preview-image.dragging {
+  cursor: grabbing;
+}
+
+.zoom-ratio {
+  color: white;
+  font-size: 14px;
+  font-weight: 500;
+  min-width: 40px;
+  text-align: center;
 }
 
 .nav-btn {
@@ -952,16 +1449,15 @@ onUnmounted(() => {
 
 .preview-info {
   padding: 15px;
-  background: rgba(0, 0, 0, 0.8);
+  background: transparent;
   text-align: center;
   position: fixed;
   bottom: 0;
   left: 0;
   right: 0;
   z-index: 1003;
-  backdrop-filter: blur(10px);
   pointer-events: auto;
-  height: 80px;
+  height: 40px;
   box-sizing: border-box;
   display: flex;
   align-items: center;
@@ -974,6 +1470,23 @@ onUnmounted(() => {
   margin: 0;
   font-size: 12px;
   opacity: 0.9;
+  text-shadow: 0 0 4px rgba(0, 0, 0, 0.8), 0 0 8px rgba(0, 0, 0, 0.6);
+}
+
+.usage-tip {
+  margin-top: 5px;
+  font-size: 10px;
+  color: #ccc;
+  opacity: 0.8;
+  text-shadow: 0 0 4px rgba(0, 0, 0, 0.8), 0 0 8px rgba(0, 0, 0, 0.6);
+}
+
+.desktop-tip {
+  display: block;
+}
+
+.mobile-tip {
+  display: none;
 }
 
 /* 响应式设计 */
@@ -1082,16 +1595,49 @@ onUnmounted(() => {
 
   .preview-image {
     max-width: calc(100vw - 20px);
-    max-height: calc(100vh - 120px);
+    max-height: calc(100vh - 100px);
     width: auto;
     height: auto;
     border: none !important;
     outline: none !important;
     box-shadow: none !important;
     animation: none !important;
-    transition: none !important;
-    transform: none !important;
+    transition: transform 0.1s ease;
+    transform-origin: center;
     object-fit: contain;
+    cursor: grab;
+  }
+
+  .preview-image:active {
+    cursor: grabbing;
+  }
+
+  .preview-image.zoomed {
+    cursor: move;
+  }
+
+  /* 移动端缩放控制 */
+  .zoom-controls {
+    gap: 3px;
+    padding: 3px 8px;
+    border-radius: 6px;
+  }
+
+  .zoom-btn {
+    width: 25px;
+    height: 25px;
+    font-size: 16px;
+  }
+
+  .zoom-ratio {
+    font-size: 12px;
+    min-width: 35px;
+  }
+
+  .reset-btn {
+    font-size: 12px;
+    padding: 3px 8px;
+    border-radius: 6px;
   }
 
   .nav-btn {
@@ -1150,6 +1696,19 @@ onUnmounted(() => {
 
   .author-info {
     font-size: 11px;
+  }
+
+  .usage-tip {
+    font-size: 8px;
+    display: block;
+  }
+
+  .desktop-tip {
+    display: none;
+  }
+
+  .mobile-tip {
+    display: block;
   }
 
   .pagination-container {
