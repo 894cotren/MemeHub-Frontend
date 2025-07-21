@@ -28,9 +28,20 @@ myAxios.interceptors.response.use(
     const { data } = response
     // 未登录   如果后端返回未登录
     if (data.code === 40100) {
-      // 不是获取用户信息的请求，并且用户目前不是已经在用户登录页面，则跳转到登录页面
+      // 白名单：无需登录即可访问的接口
+      const publicApiWhitelist = [
+        'user/getLoginUser',        // 获取用户信息（正确路径）
+        'picture/getPicturePagesVO' // 获取图片列表（允许未登录访问）
+      ]
+      
+      // 检查当前请求是否在白名单中
+      const isPublicApi = publicApiWhitelist.some(api => 
+        response.request.responseURL.includes(api)
+      )
+      
+      // 不是白名单接口，并且用户目前不是已经在用户登录页面，则跳转到登录页面
       if (
-        !response.request.responseURL.includes('user/get/login') &&
+        !isPublicApi &&
         !window.location.pathname.includes('/user/login')
       ) {
         message.warning('请先登录')

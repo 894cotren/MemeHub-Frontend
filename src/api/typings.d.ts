@@ -59,6 +59,12 @@ declare namespace API {
     message?: string
   }
 
+  type BaseResponseString_ = {
+    code?: number
+    data?: string
+    message?: string
+  }
+
   type BaseResponseUserVO_ = {
     code?: number
     data?: UserVO
@@ -454,7 +460,7 @@ declare namespace API {
   }
 
   type UserUpdateRequest = {
-    favoriteCount?: number
+    favoriteLimit?: number
     id?: number
     userAccount?: string
     userAvatar?: string

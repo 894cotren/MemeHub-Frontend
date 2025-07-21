@@ -9,33 +9,61 @@ let firstFetchLoginUser = true
 
 router.beforeEach(async (to, from, next) => {
   /**
-   * 简单思路就是我们首次进入页面先获取下当前用户信息保存到全局变量store里。
-   * 然后我们我们后续每次进入router页面前，判断该router的路径是否/admin这种需要权限的
-   * 如果需要鉴权，先从全局变量store里获取到当前用户，然后根据url指定的权限去对比用户角色
-   * 根据这个来判断放不放行
+   * 全局权限控制逻辑：
+   * 1. 公开页面白名单 - 无需登录即可访问
+   * 2. 普通页面 - 需要登录
+   * 3. 管理员页面 - 需要管理员权限
    */
   const loginUserStore = useLoginUserStore()
   let loginUser = loginUserStore.loginUser
-  //如果是首次，那么获取一下当前用户。  记住要获取到当前用户信息后，再校验权限，这里需要同步。
+  
+  //如果是首次，那么获取一下当前用户信息
   if (firstFetchLoginUser) {
-    //获取当前用户
     await loginUserStore.fetchLoginUser()
     loginUser = loginUserStore.loginUser
-    //设置之后为非首次
     firstFetchLoginUser = false
   }
 
   //获取到将要去的url
   const toUrl = to.fullPath
-  //判断将要去的页面是否需要权限
+  
+  // 公开页面白名单 - 无需登录即可访问
+  const publicPages = [
+    '/',                    // 首页
+    '/pictureShow',         // meme图库页面
+    '/user/login',          // 登录页面
+    '/user/register'        // 注册页面
+  ]
+  
+  // 检查是否为公开页面
+  const isPublicPage = publicPages.some(page => 
+    toUrl === page || toUrl.startsWith(page + '?')
+  )
+  
+  // 如果是公开页面，直接放行
+  if (isPublicPage) {
+    next()
+    return
+  }
+  
+  // 非公开页面需要检查登录状态
+  if (!loginUser || !loginUser.id) {
+    // 未登录，跳转到登录页面
+    message.warning('请先登录')
+    next(`/user/login?redirect=${encodeURIComponent(to.fullPath)}`)
+    return
+  }
+  
+  // 已登录，检查管理员页面权限
   if (toUrl.startsWith('/admin')) {
-    if (!loginUser || loginUser.userRole !== 'admin') {
-      //没有权限
-      message.error('没有权限')
-      //跳转到登录页，并记录下没有权限进入的页面。
-      next(`/user/login?redirectTo=${to.fullPath}`)
+    if (loginUser.userRole !== 'admin') {
+      // 没有管理员权限
+      message.error('没有权限访问管理页面')
+      next(`/user/login?redirect=${encodeURIComponent(to.fullPath)}`)
       return
     }
   }
+  
+  // 权限检查通过，放行
   next()
 })
