@@ -332,6 +332,7 @@ declare namespace API {
 
   type PictureVOPagesRequest = {
     category?: string
+    endTime?: string
     introduction?: string
     pageNum?: number
     pageSize?: number
@@ -339,7 +340,9 @@ declare namespace API {
     searchText?: string
     sortField?: string
     sortOrder?: string
+    startTime?: string
     tags?: string[]
+    userId?: number
   }
 
   type PlateDetail = {

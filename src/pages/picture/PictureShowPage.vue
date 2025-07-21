@@ -1,35 +1,21 @@
 
 <template>
   <div id="pictureShowPage">
-        <!-- 搜索区域 -->
-    <div class="search-section">
-      <a-row :gutter="[16, 16]" justify="center" align="middle" class="search-row">
-        <a-col :xs="24" :sm="24" :md="4" :lg="3" class="category-col">
-          <a-select
-            v-model:value="searchForm.category"
-            placeholder="全部分类"
-            allow-clear
-            size="default"
-            @change="handleSearch"
-          >
-            <a-select-option value="">全部分类</a-select-option>
-            <a-select-option value="二次元">二次元</a-select-option>
-            <a-select-option value="日常">日常</a-select-option>
-            <a-select-option value="地狱">地狱</a-select-option>
-            <a-select-option value="其他">其他</a-select-option>
-          </a-select>
-        </a-col>
-        <a-col :xs="24" :sm="24" :md="16" :lg="12" class="search-col">
-          <a-input-search
-            v-model:value="searchForm.searchText"
-            placeholder="搜索图片..."
-            enter-button="搜索"
-            size="default"
-            @search="handleSearch"
-            @input="handleSearchInput"
-          />
-        </a-col>
-      </a-row>
+        <!-- 排序区域 -->
+    <div class="sort-section">
+      <div class="sort-wrapper">
+        <span class="sort-label">排序：</span>
+        <a-select
+          v-model:value="currentSortOrder"
+          size="small"
+          class="simple-select"
+          :bordered="false"
+          @change="handleSortChange"
+        >
+          <a-select-option value="descend">时间降序</a-select-option>
+          <a-select-option value="ascend">时间升序</a-select-option>
+        </a-select>
+      </div>
     </div>
 
     <!-- 加载状态 -->
@@ -276,13 +262,15 @@ const { loginUser } = loginUserStore
 
 // 搜索表单
 const searchForm = reactive<API.PictureVOPagesRequest>({
-  searchText: '',
-  category: '',
+  // searchText: '', // 暂时不使用搜索功能
   pageNum: 1,
   pageSize: 12,
-  sortField: 'createTime',
-  sortOrder: 'desc'
+  sortField: 'create_time',
+  sortOrder: 'descend'
 })
+
+// 排序状态
+const currentSortOrder = ref('descend') // 默认按创建时间降序
 
 // 获取图片列表
 const fetchPictureList = async () => {
@@ -315,19 +303,27 @@ const fetchPictureList = async () => {
   }
 }
 
-// 搜索处理
-const handleSearch = () => {
-  currentPage.value = 1
-  fetchPictureList()
-}
+// 搜索处理 - 暂时不使用
+// const handleSearch = () => {
+//   currentPage.value = 1
+//   fetchPictureList()
+// }
 
-// 搜索输入处理（防抖）
-let searchTimeout: number
-const handleSearchInput = () => {
-  clearTimeout(searchTimeout)
-  searchTimeout = setTimeout(() => {
-    handleSearch()
-  }, 500)
+// 搜索输入处理（防抖）- 暂时不使用
+// let searchTimeout: number
+// const handleSearchInput = () => {
+//   clearTimeout(searchTimeout)
+//   searchTimeout = setTimeout(() => {
+//     handleSearch()
+//   }, 500)
+// }
+
+// 排序变化处理
+const handleSortChange = (value: string) => {
+  currentSortOrder.value = value
+  searchForm.sortOrder = value
+  currentPage.value = 1 // 排序变化时重置到第一页
+  fetchPictureList()
 }
 
 // 分页变化处理
@@ -402,7 +398,7 @@ const getImageActualSize = () => {
   if (!imageElement) {
     return { width: 0, height: 0 }
   }
-  
+
   return {
     width: imageElement.offsetWidth,
     height: imageElement.offsetHeight
@@ -413,7 +409,7 @@ const getImageActualSize = () => {
 const calculateDragLimits = () => {
   const containerWidth = window.innerWidth
   const containerHeight = window.innerHeight - 100 // 减去头部和底部UI区域
-  
+
   const actualImageSize = getImageActualSize()
   if (!actualImageSize.width || !actualImageSize.height) {
     return {
@@ -433,7 +429,7 @@ const calculateDragLimits = () => {
   // 判断是否溢出
   const overflowX = scaledWidth > containerWidth
   const overflowY = scaledHeight > containerHeight
-  
+
   // 只有溢出的方向才允许拖动
   const maxTranslateX = overflowX ? (scaledWidth - containerWidth) / 2 : 0
   const maxTranslateY = overflowY ? (scaledHeight - containerHeight) / 2 : 0
@@ -884,22 +880,62 @@ onUnmounted(() => {
   opacity: 0.9;
 }
 
-/* 搜索区域 */
-.search-section {
-  background: white;
-  padding: 20px;
-  border-radius: 12px;
-  box-shadow: 0 4px 20px rgba(0,0,0,0.08);
-  margin-bottom: 15px;
+/* 排序区域 */
+.sort-section {
+  padding: 15px 0 10px 0;
+  margin-bottom: 10px;
 }
 
-.search-row {
-  margin: 0 !important;
+.sort-wrapper {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
 }
 
-.category-col,
-.search-col {
-  padding: 0 8px !important;
+.sort-label {
+  font-size: 0.9rem;
+  color: #666;
+  white-space: nowrap;
+}
+
+/* 极简下拉框样式 */
+.simple-select {
+  font-size: 0.9rem !important;
+}
+
+.simple-select .ant-select-selector {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+  height: auto !important;
+  min-height: auto !important;
+}
+
+.simple-select .ant-select-selection-item {
+  color: #1890ff !important;
+  font-size: 0.9rem !important;
+  padding-right: 0 !important;
+  line-height: 1.4 !important;
+}
+
+.simple-select .ant-select-arrow {
+  color: #1890ff !important;
+  font-size: 10px !important;
+  right: -2px !important;
+}
+
+.simple-select:hover .ant-select-selection-item {
+  color: #40a9ff !important;
+}
+
+.simple-select:hover .ant-select-arrow {
+  color: #40a9ff !important;
+}
+
+.simple-select.ant-select-focused .ant-select-selector {
+  border: none !important;
+  box-shadow: none !important;
 }
 
 
@@ -1514,16 +1550,23 @@ onUnmounted(() => {
     padding: 0 2px;
   }
 
-  .search-section {
-    padding: 15px;
+  .sort-section {
+    padding: 10px 0 8px 0;
+    margin-bottom: 8px;
   }
 
-  .category-col {
-    margin-bottom: 10px;
+  .sort-wrapper {
+    flex-direction: row;
+    align-items: center;
+    gap: 4px;
   }
 
-  .search-col {
-    margin-bottom: 0;
+  .sort-label {
+    font-size: 0.85rem;
+  }
+
+  .simple-select .ant-select-selection-item {
+    font-size: 0.85rem !important;
   }
 }
 
@@ -1577,13 +1620,21 @@ onUnmounted(() => {
     margin-bottom: 15px;
   }
 
-  .category-col,
-  .search-col {
-    padding: 0 3px !important;
+  .sort-section {
+    padding: 8px 0 6px 0;
+    margin-bottom: 6px;
   }
 
-  .category-col {
-    margin-bottom: 6px;
+  .sort-wrapper {
+    gap: 3px;
+  }
+
+  .sort-label {
+    font-size: 0.8rem;
+  }
+
+  .simple-select .ant-select-selection-item {
+    font-size: 0.8rem !important;
   }
 
   /* 移动端收藏按钮样式 */
