@@ -355,42 +355,55 @@ const resetZoom = () => {
   document.removeEventListener('mouseup', handleGlobalMouseUp)
 }
 
+// 获取图片元素的实际渲染尺寸
+const getImageActualSize = () => {
+  const imageElement = document.querySelector('.preview-image') as HTMLImageElement
+  if (!imageElement) {
+    return { width: 0, height: 0 }
+  }
+  
+  return {
+    width: imageElement.offsetWidth,
+    height: imageElement.offsetHeight
+  }
+}
+
 // 计算拖拽限制范围
 const calculateDragLimits = () => {
-  // 获取容器尺寸（预览区域）- 需要减去头部和底部UI区域的高度
-  const containerRect = {
-    width: window.innerWidth,
-    height: window.innerHeight - 100 // 减去头部(60px)和底部(40px)的UI区域
-  }
-
-  // 如果没有图片尺寸信息，使用默认值
-  if (!imageDisplayWidth.value || !imageDisplayHeight.value) {
+  const containerWidth = window.innerWidth
+  const containerHeight = window.innerHeight - 100 // 减去头部和底部UI区域
+  
+  const actualImageSize = getImageActualSize()
+  if (!actualImageSize.width || !actualImageSize.height) {
     return {
       maxTranslateX: 0,
       maxTranslateY: 0,
       minTranslateX: 0,
-      minTranslateY: 0
+      minTranslateY: 0,
+      canMoveX: false,
+      canMoveY: false
     }
   }
 
-  // 计算图片在当前缩放比例下的实际尺寸
-  const scaledWidth = imageDisplayWidth.value * imageScale.value
-  const scaledHeight = imageDisplayHeight.value * imageScale.value
+  // 计算图片缩放后的实际尺寸
+  const scaledWidth = actualImageSize.width * imageScale.value
+  const scaledHeight = actualImageSize.height * imageScale.value
 
-  // 计算可拖拽的最大范围
-  // 为了让图片可以完全滑动查看，在垂直方向上增加额外的空间
-  const maxTranslateX = Math.max(0, (scaledWidth - containerRect.width) / 2)
-  const maxTranslateY = Math.max(0, (scaledHeight - containerRect.height) / 2 + 50) // 上下各增加50px的滑动空间
+  // 判断是否溢出
+  const overflowX = scaledWidth > containerWidth
+  const overflowY = scaledHeight > containerHeight
+  
+  // 只有溢出的方向才允许拖动
+  const maxTranslateX = overflowX ? (scaledWidth - containerWidth) / 2 : 0
+  const maxTranslateY = overflowY ? (scaledHeight - containerHeight) / 2 : 0
 
   return {
     maxTranslateX,
     maxTranslateY,
     minTranslateX: -maxTranslateX,
     minTranslateY: -maxTranslateY,
-    scaledWidth,
-    scaledHeight,
-    containerWidth: containerRect.width,
-    containerHeight: containerRect.height
+    canMoveX: overflowX,
+    canMoveY: overflowY
   }
 }
 
@@ -398,9 +411,9 @@ const calculateDragLimits = () => {
 const applyDragLimits = () => {
   const limits = calculateDragLimits()
 
-  // 限制X方向的移动 - 严格左右居中
-  if (limits.maxTranslateX <= 5) { // 给一些容错空间
-    imageTranslateX.value = 0 // 图片宽度基本没有超出容器，严格居中显示
+  // X方向：如果没有溢出，强制居中；如果溢出，限制在边界内
+  if (!limits.canMoveX) {
+    imageTranslateX.value = 0
   } else {
     imageTranslateX.value = Math.max(
       limits.minTranslateX,
@@ -408,9 +421,9 @@ const applyDragLimits = () => {
     )
   }
 
-  // 限制Y方向的移动
-  if (limits.maxTranslateY <= 5) { // 给一些容错空间
-    imageTranslateY.value = 0 // 图片高度基本没有超出容器，严格居中显示
+  // Y方向：如果没有溢出，强制居中；如果溢出，限制在边界内
+  if (!limits.canMoveY) {
+    imageTranslateY.value = 0
   } else {
     imageTranslateY.value = Math.max(
       limits.minTranslateY,
