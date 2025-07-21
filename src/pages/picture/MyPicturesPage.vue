@@ -1,10 +1,8 @@
-
 <template>
-  <div id="favoritePicturePage">
+  <div id="myPicturesPage">
     <div>
-      <h2>我的收藏</h2>
+      <h2>我的上传</h2>
     </div>
-
     <!-- 排序区域 -->
     <div class="sort-section">
       <div class="sort-wrapper">
@@ -16,8 +14,8 @@
           :bordered="false"
           @change="handleSortChange"
         >
-          <a-select-option value="descend">收藏时间降序</a-select-option>
-          <a-select-option value="ascend">收藏时间升序</a-select-option>
+          <a-select-option value="descend">时间降序</a-select-option>
+          <a-select-option value="ascend">时间升序</a-select-option>
         </a-select>
       </div>
     </div>
@@ -64,7 +62,7 @@
             </div>
             <div class="image-overlay">
               <div class="overlay-content">
-                <p v-if="picture.userName">by {{ picture.userName }}</p>
+                <p>上传时间：{{ formatDate(picture.createTime) }}</p>
               </div>
             </div>
           </div>
@@ -73,14 +71,16 @@
 
       <!-- 无数据提示 -->
       <div v-if="!loading && pictureList.length === 0" class="no-data">
-        <a-empty description="您还没有收藏任何图片">
+        <a-empty description="您还没有上传任何图片">
           <template #image>
             <svg viewBox="0 0 64 64" width="64" height="64">
               <path d="M32 0C14.4 0 0 14.4 0 32s14.4 32 32 32 32-14.4 32-32S49.6 0 32 0zm0 58C17.7 58 6 46.3 6 32S17.7 6 32 6s26 11.7 26 26-11.7 26-26 26z" fill="#d9d9d9"/>
-              <path d="M32 16l4 8 8 1-6 6 1 8-7-4-7 4 1-8-6-6 8-1z" fill="#f0f0f0"/>
+              <path d="M20 24h24v16H20z" fill="#f0f0f0"/>
+              <path d="M26 30l4-4 4 4 6-6v12H20V30l6-6z" fill="#d9d9d9"/>
+              <circle cx="28" cy="20" r="2" fill="#d9d9d9"/>
             </svg>
           </template>
-          <a-button type="primary" @click="goToPictureShow">去图库看看</a-button>
+          <a-button type="primary" @click="goToAddPicture">立即上传图片</a-button>
         </a-empty>
       </div>
     </div>
@@ -201,9 +201,9 @@
         </div>
 
         <!-- 图片信息区域 -->
-        <div class="preview-info" v-if="currentPicture.userName">
-          <p class="author-info">
-            贡献者：{{ currentPicture.userName }}
+        <div class="preview-info">
+          <p class="upload-info">
+            上传时间：{{ formatDate(currentPicture.createTime) }}
           </p>
         </div>
 
@@ -232,8 +232,11 @@
 import { ref, reactive, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { message } from 'ant-design-vue'
-import { getFavoritePicturePagesUsingPost, userUnfavoritePictureUsingPost, userFavoritePictureUsingPost } from '@/api/pictureController'
+import { getPicturePagesVoUsingPost, userFavoritePictureUsingPost, userUnfavoritePictureUsingPost } from '@/api/pictureController'
 import { useLoginUserStore } from '@/stores/userLoginUserStore'
+
+// 路由
+const router = useRouter()
 
 // 响应式数据
 const loading = ref(false)
@@ -273,55 +276,68 @@ const lastTouchY = ref(0)
 const loginUserStore = useLoginUserStore()
 const { loginUser } = loginUserStore
 
-// 路由
-const router = useRouter()
-
 // 搜索表单
-const searchForm = reactive({
+const searchForm = reactive<API.PictureVOPagesRequest>({
   pageNum: 1,
   pageSize: 12,
   sortField: 'create_time',
-  sortOrder: 'descend'
+  sortOrder: 'descend',
+  userId: undefined // 用于查询当前用户的图片
 })
 
 // 排序状态
-const currentSortOrder = ref('descend') // 默认按收藏时间降序
+const currentSortOrder = ref('descend') // 默认按创建时间降序
 
-// 跳转到图库页面
-const goToPictureShow = () => {
-  router.push('/pictureShow')
+// 格式化日期
+const formatDate = (dateString: string) => {
+  if (!dateString) return ''
+  const date = new Date(dateString)
+  return date.toLocaleString('zh-CN', {
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit'
+  })
 }
 
-// 获取收藏图片列表
-const fetchFavoritePictureList = async () => {
+// 跳转到添加图片页面
+const goToAddPicture = () => {
+  router.push('/addPicture')
+}
+
+// 获取图片列表
+const fetchPictureList = async () => {
   try {
     loading.value = true
 
+    // 确保传入当前用户ID
     if (!loginUser?.id) {
-      message.warning('请先登录后查看收藏')
+      message.error('请先登录')
+      router.push('/user/login')
       return
     }
 
-    const requestParams = {
+    const requestParams: API.PictureVOPagesRequest = {
       ...searchForm,
       pageNum: currentPage.value,
       pageSize: pageSize.value,
-      userId: loginUser.id
+      userId: loginUser.id // 关键：传入当前用户ID
     }
 
-    const response = await getFavoritePicturePagesUsingPost(requestParams)
+    const response = await getPicturePagesVoUsingPost(requestParams)
 
     if (response.data?.code === 20000 && response.data?.data) {
       pictureList.value = response.data.data.records || []
       total.value = parseInt(String(response.data.data.total || 0)) || 0
     } else {
-      message.error(response.data?.message || '获取收藏图片列表失败')
+      message.error(response.data?.message || '获取图片列表失败')
       pictureList.value = []
       total.value = 0
     }
   } catch (error) {
-    console.error('获取收藏图片列表失败:', error)
-    message.error('获取收藏图片列表失败，请稍后重试')
+    console.error('获取图片列表失败:', error)
+    message.error('获取图片列表失败，请稍后重试')
     pictureList.value = []
     total.value = 0
   } finally {
@@ -329,20 +345,20 @@ const fetchFavoritePictureList = async () => {
   }
 }
 
-// 分页变化处理
-const handlePageChange = (page: number) => {
-  currentPage.value = page
-  fetchFavoritePictureList()
-  // 滚动到页面顶部
-  window.scrollTo({ top: 0, behavior: 'smooth' })
-}
-
 // 排序变化处理
 const handleSortChange = (value: string) => {
   currentSortOrder.value = value
   searchForm.sortOrder = value
   currentPage.value = 1 // 排序变化时重置到第一页
-  fetchFavoritePictureList()
+  fetchPictureList()
+}
+
+// 分页变化处理
+const handlePageChange = (page: number) => {
+  currentPage.value = page
+  fetchPictureList()
+  // 滚动到页面顶部
+  window.scrollTo({ top: 0, behavior: 'smooth' })
 }
 
 // 图片点击处理
@@ -409,7 +425,7 @@ const getImageActualSize = () => {
   if (!imageElement) {
     return { width: 0, height: 0 }
   }
-  
+
   return {
     width: imageElement.offsetWidth,
     height: imageElement.offsetHeight
@@ -420,7 +436,7 @@ const getImageActualSize = () => {
 const calculateDragLimits = () => {
   const containerWidth = window.innerWidth
   const containerHeight = window.innerHeight - 100 // 减去头部和底部UI区域
-  
+
   const actualImageSize = getImageActualSize()
   if (!actualImageSize.width || !actualImageSize.height) {
     return {
@@ -440,7 +456,7 @@ const calculateDragLimits = () => {
   // 判断是否溢出
   const overflowX = scaledWidth > containerWidth
   const overflowY = scaledHeight > containerHeight
-  
+
   // 只有溢出的方向才允许拖动
   const maxTranslateX = overflowX ? (scaledWidth - containerWidth) / 2 : 0
   const maxTranslateY = overflowY ? (scaledHeight - containerHeight) / 2 : 0
@@ -520,123 +536,6 @@ const zoomOut = () => {
   applyDragLimits()
 }
 
-// 键盘事件处理
-const handleKeyDown = (event: KeyboardEvent) => {
-  if (!previewVisible.value) return
-
-  switch (event.key) {
-    case 'ArrowLeft':
-      event.preventDefault()
-      prevPicture()
-      break
-    case 'ArrowRight':
-      event.preventDefault()
-      nextPicture()
-      break
-    case 'Escape':
-      event.preventDefault()
-      closePreview()
-      break
-    case '=':
-    case '+':
-      event.preventDefault()
-      zoomIn()
-      break
-    case '-':
-      event.preventDefault()
-      zoomOut()
-      break
-    case '0':
-      event.preventDefault()
-      resetZoom()
-      break
-  }
-}
-
-// 图片加载完成时获取尺寸信息
-const handleImageLoad = (event: Event) => {
-  const img = event.target as HTMLImageElement
-  img.style.opacity = '1'
-
-  // 获取图片的自然尺寸
-  imageNaturalWidth.value = img.naturalWidth
-  imageNaturalHeight.value = img.naturalHeight
-
-  // 计算图片的实际显示尺寸
-  const containerWidth = window.innerWidth
-  const containerHeight = window.innerHeight
-
-  // 对于长图片，我们使用更宽松的显示逻辑
-  const maxDisplayWidth = containerWidth - 100
-  const maxDisplayHeight = containerHeight - 100
-
-  // 计算宽高比
-  const imageAspectRatio = imageNaturalWidth.value / imageNaturalHeight.value
-  const containerAspectRatio = maxDisplayWidth / maxDisplayHeight
-
-  // 检查是否为长图片（高度明显大于宽度）
-  const isLongImage = imageAspectRatio < 0.6 // 宽高比小于0.6认为是长图片
-
-  if (isLongImage) {
-    // 对于长图片，优先适应宽度，允许高度超出
-    const widthRatio = maxDisplayWidth / imageNaturalWidth.value
-    imageDisplayWidth.value = imageNaturalWidth.value * widthRatio
-    imageDisplayHeight.value = imageNaturalHeight.value * widthRatio
-  } else {
-    // 对于普通图片，保持原有逻辑
-    const widthRatio = maxDisplayWidth / imageNaturalWidth.value
-    const heightRatio = maxDisplayHeight / imageNaturalHeight.value
-    const displayRatio = Math.min(widthRatio, heightRatio)
-
-    imageDisplayWidth.value = imageNaturalWidth.value * displayRatio
-    imageDisplayHeight.value = imageNaturalHeight.value * displayRatio
-  }
-
-  // 应用拖拽限制
-  applyDragLimits()
-}
-
-// 添加窗口尺寸变化时的处理
-const handleWindowResize = () => {
-  // 重新计算图片显示尺寸
-  if (imageNaturalWidth.value && imageNaturalHeight.value) {
-    const containerWidth = window.innerWidth
-    const containerHeight = window.innerHeight
-
-    const maxDisplayWidth = containerWidth - 100
-    const maxDisplayHeight = containerHeight - 100
-
-    // 计算宽高比
-    const imageAspectRatio = imageNaturalWidth.value / imageNaturalHeight.value
-    const isLongImage = imageAspectRatio < 0.6
-
-    if (isLongImage) {
-      // 对于长图片，优先适应宽度
-      const widthRatio = maxDisplayWidth / imageNaturalWidth.value
-      imageDisplayWidth.value = imageNaturalWidth.value * widthRatio
-      imageDisplayHeight.value = imageNaturalHeight.value * widthRatio
-    } else {
-      // 对于普通图片，保持原有逻辑
-      const widthRatio = maxDisplayWidth / imageNaturalWidth.value
-      const heightRatio = maxDisplayHeight / imageNaturalHeight.value
-      const displayRatio = Math.min(widthRatio, heightRatio)
-
-      imageDisplayWidth.value = imageNaturalWidth.value * displayRatio
-      imageDisplayHeight.value = imageNaturalHeight.value * displayRatio
-    }
-  }
-
-  // 重新应用拖拽限制
-  applyDragLimits()
-}
-
-// 图片加载失败处理
-const handleImageError = (event: Event) => {
-  const img = event.target as HTMLImageElement
-  img.src = '/favicon.ico' // 设置默认图片
-  img.alt = '图片加载失败'
-}
-
 // 检查图片是否超出屏幕，只有超出时才允许拖拽
 const canDrag = () => {
   const limits = calculateDragLimits()
@@ -691,20 +590,6 @@ const handleGlobalMouseUp = (event: MouseEvent) => {
   }
 }
 
-// 保持原有的方法名以免破坏模板绑定
-const handleMouseMove = (event: MouseEvent) => {
-  // 这个方法现在不需要做任何事情，因为拖拽由全局监听器处理
-}
-
-const handleMouseUp = () => {
-  // 这个方法现在不需要做任何事情，因为拖拽由全局监听器处理
-}
-
-const handleMouseLeave = () => {
-  // 这个方法现在不需要做任何事情，因为拖拽由全局监听器处理
-}
-
-// 触摸事件处理 (移动端双指缩放)
 const getTouchDistance = (touches: TouchList) => {
   if (touches.length < 2) return 0
 
@@ -784,6 +669,89 @@ const handleTouchEnd = () => {
   lastTouchDistance.value = 0
 }
 
+// 键盘事件处理
+const handleKeyDown = (event: KeyboardEvent) => {
+  if (!previewVisible.value) return
+
+  switch (event.key) {
+    case 'ArrowLeft':
+      event.preventDefault()
+      prevPicture()
+      break
+    case 'ArrowRight':
+      event.preventDefault()
+      nextPicture()
+      break
+    case 'Escape':
+      event.preventDefault()
+      closePreview()
+      break
+    case '=':
+    case '+':
+      event.preventDefault()
+      zoomIn()
+      break
+    case '-':
+      event.preventDefault()
+      zoomOut()
+      break
+    case '0':
+      event.preventDefault()
+      resetZoom()
+      break
+  }
+}
+
+// 图片加载成功处理
+const handleImageLoad = (event: Event) => {
+  const img = event.target as HTMLImageElement
+  img.style.opacity = '1'
+
+  // 获取图片的自然尺寸
+  imageNaturalWidth.value = img.naturalWidth
+  imageNaturalHeight.value = img.naturalHeight
+
+  // 计算图片的实际显示尺寸
+  const containerWidth = window.innerWidth
+  const containerHeight = window.innerHeight
+
+  // 对于长图片，我们使用更宽松的显示逻辑
+  const maxDisplayWidth = containerWidth - 100
+  const maxDisplayHeight = containerHeight - 100
+
+  // 计算宽高比
+  const imageAspectRatio = imageNaturalWidth.value / imageNaturalHeight.value
+  const containerAspectRatio = maxDisplayWidth / maxDisplayHeight
+
+  // 检查是否为长图片（高度明显大于宽度）
+  const isLongImage = imageAspectRatio < 0.6 // 宽高比小于0.6认为是长图片
+
+  if (isLongImage) {
+    // 对于长图片，优先适应宽度，允许高度超出
+    const widthRatio = maxDisplayWidth / imageNaturalWidth.value
+    imageDisplayWidth.value = imageNaturalWidth.value * widthRatio
+    imageDisplayHeight.value = imageNaturalHeight.value * widthRatio
+  } else {
+    // 对于普通图片，保持原有逻辑
+    const widthRatio = maxDisplayWidth / imageNaturalWidth.value
+    const heightRatio = maxDisplayHeight / imageNaturalHeight.value
+    const displayRatio = Math.min(widthRatio, heightRatio)
+
+    imageDisplayWidth.value = imageNaturalWidth.value * displayRatio
+    imageDisplayHeight.value = imageNaturalHeight.value * displayRatio
+  }
+
+  // 应用拖拽限制
+  applyDragLimits()
+}
+
+// 图片加载失败处理
+const handleImageError = (event: Event) => {
+  const img = event.target as HTMLImageElement
+  img.src = '/favicon.ico' // 设置默认图片
+  img.alt = '图片加载失败'
+}
+
 // 切换收藏状态
 const toggleFavorite = async (picture: API.PicturePagesVO, event?: Event) => {
   // 阻止事件冒泡，防止打开预览
@@ -794,7 +762,7 @@ const toggleFavorite = async (picture: API.PicturePagesVO, event?: Event) => {
 
   // 检查用户是否已登录
   if (!loginUser?.id) {
-    message.warning('请先登录后再操作收藏')
+    message.warning('请先登录后再收藏图片')
     return
   }
 
@@ -812,34 +780,11 @@ const toggleFavorite = async (picture: API.PicturePagesVO, event?: Event) => {
       if (response.data?.code === 20000 && response.data?.data) {
         picture.isFavorite = false
         message.success('取消收藏成功')
-
-        // 从收藏列表中移除该图片
-        const index = pictureList.value.findIndex(p => p.id === picture.id)
-        if (index !== -1) {
-          pictureList.value.splice(index, 1)
-          total.value = Math.max(0, total.value - 1)
-
-          // 如果当前页没有图片了，且不是第一页，则回到上一页
-          if (pictureList.value.length === 0 && currentPage.value > 1) {
-            currentPage.value--
-            fetchFavoritePictureList()
-          }
-
-          // 如果在预览模式下，需要调整当前图片索引
-          if (previewVisible.value && currentPictureIndex.value >= pictureList.value.length) {
-            if (pictureList.value.length === 0) {
-              closePreview()
-            } else {
-              currentPictureIndex.value = Math.max(0, pictureList.value.length - 1)
-              currentPicture.value = pictureList.value[currentPictureIndex.value]
-            }
-          }
-        }
       } else {
         message.error(response.data?.message || '取消收藏失败')
       }
     } else {
-      // 重新收藏（一般不会发生，因为这里都是收藏的图片）
+      // 收藏图片
       const response = await userFavoritePictureUsingPost({
         picId: picId,
         userId: userId
@@ -858,11 +803,45 @@ const toggleFavorite = async (picture: API.PicturePagesVO, event?: Event) => {
   }
 }
 
+// 添加窗口尺寸变化时的处理
+const handleWindowResize = () => {
+  // 重新计算图片显示尺寸
+  if (imageNaturalWidth.value && imageNaturalHeight.value) {
+    const containerWidth = window.innerWidth
+    const containerHeight = window.innerHeight
+
+    const maxDisplayWidth = containerWidth - 100
+    const maxDisplayHeight = containerHeight - 100
+
+    // 计算宽高比
+    const imageAspectRatio = imageNaturalWidth.value / imageNaturalHeight.value
+    const isLongImage = imageAspectRatio < 0.6
+
+    if (isLongImage) {
+      // 对于长图片，优先适应宽度
+      const widthRatio = maxDisplayWidth / imageNaturalWidth.value
+      imageDisplayWidth.value = imageNaturalWidth.value * widthRatio
+      imageDisplayHeight.value = imageNaturalHeight.value * widthRatio
+    } else {
+      // 对于普通图片，保持原有逻辑
+      const widthRatio = maxDisplayWidth / imageNaturalWidth.value
+      const heightRatio = maxDisplayHeight / imageNaturalHeight.value
+      const displayRatio = Math.min(widthRatio, heightRatio)
+
+      imageDisplayWidth.value = imageNaturalWidth.value * displayRatio
+      imageDisplayHeight.value = imageNaturalHeight.value * displayRatio
+    }
+  }
+
+  // 重新应用拖拽限制
+  applyDragLimits()
+}
+
 // 页面挂载时获取数据
 onMounted(() => {
   // 获取用户登录状态
   loginUserStore.fetchLoginUser()
-  fetchFavoritePictureList()
+  fetchPictureList()
   document.addEventListener('keydown', handleKeyDown)
 
   // 监听窗口大小变化
@@ -884,20 +863,44 @@ onUnmounted(() => {
 </script>
 
 <style scoped>
-#favoritePicturePage {
+/* 复用PictureShowPage的所有样式，只修改特定部分 */
+#myPicturesPage {
   min-height: 100vh;
   background: rgb(34, 34, 34);
   padding: 0 20px;
   color: #ffffff;
 }
 
-#favoritePicturePage h2 {
+#myPicturesPage h2 {
   text-align: left;
   color: #ffffff;
   margin-bottom: 20px;
   padding-top: 30px;
   font-size: 1.8rem;
   font-weight: 600;
+}
+
+/* 页面头部 */
+.page-header {
+  text-align: center;
+  padding: 30px 0 20px;
+  background: linear-gradient(135deg, #52c41a 0%, #389e0d 100%);
+  margin: -20px -20px 30px -20px;
+  color: white;
+  border-radius: 0 0 12px 12px;
+}
+
+.page-title {
+  font-size: 2.5rem;
+  font-weight: 700;
+  margin: 0;
+  text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+}
+
+.page-subtitle {
+  font-size: 1.1rem;
+  margin: 10px 0 0 0;
+  opacity: 0.9;
 }
 
 /* 排序区域 */
@@ -1001,30 +1004,12 @@ onUnmounted(() => {
   overflow: hidden;
 }
 
-/* 移动端图片容器自适应高度 */
-@media (max-width: 600px) {
-  .image-container {
-    height: auto;
-    min-height: 200px;
-  }
-}
-
 .image-container img {
   width: 100%;
   height: 100%;
   object-fit: cover;
   transition: all 0.3s ease;
   opacity: 0;
-}
-
-/* 移动端图片自适应 */
-@media (max-width: 600px) {
-  .image-container img {
-    width: 100%;
-    height: auto;
-    max-height: 80vh;
-    object-fit: contain;
-  }
 }
 
 .image-container:hover img {
@@ -1037,9 +1022,9 @@ onUnmounted(() => {
   left: 0;
   right: 0;
   bottom: 0;
-  background: linear-gradient(to bottom, transparent 0%, rgba(0,0,0,0.7) 100%);
+  background: linear-gradient(to bottom, transparent 0%, rgba(0,0,0,0.9) 100%);
   opacity: 0;
-  transition: opacity 0.3s ease;
+  transition: all 0.4s ease;
   display: flex;
   align-items: flex-end;
   padding: 20px;
@@ -1047,25 +1032,6 @@ onUnmounted(() => {
 
 .picture-card:hover .image-overlay {
   opacity: 1;
-}
-
-/* 移动端取消悬停效果 */
-@media (max-width: 600px) {
-  .image-container:hover img {
-    transform: none;
-  }
-
-  .image-overlay {
-    display: none;
-  }
-
-  .picture-card:hover .image-overlay {
-    display: none;
-  }
-
-  .favorite-btn {
-    display: none !important; /* 移动端完全隐藏收藏按钮 */
-  }
 }
 
 .overlay-content {
@@ -1089,14 +1055,13 @@ onUnmounted(() => {
   transition: opacity 0.3s ease;
 }
 
-/* PC端悬停时显示收藏按钮 */
 .picture-card:hover .favorite-btn {
   opacity: 1;
 }
 
 .heart-btn {
-  background: rgba(255, 255, 255, 0.9) !important;
-  border: none !important;
+  background: rgba(50, 50, 50, 0.9) !important;
+  border: 1px solid rgba(80, 80, 80, 0.8) !important;
   width: 44px !important;
   height: 44px !important;
   border-radius: 50% !important;
@@ -1105,13 +1070,14 @@ onUnmounted(() => {
   justify-content: center !important;
   backdrop-filter: blur(5px);
   transition: all 0.3s ease !important;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15) !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.5) !important;
 }
 
 .heart-btn:hover {
-  background: rgba(255, 255, 255, 1) !important;
+  background: rgba(70, 70, 70, 1) !important;
   transform: scale(1.1) !important;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2) !important;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.7) !important;
+  border-color: rgba(100, 100, 100, 1) !important;
 }
 
 .heart-btn.favorited {
@@ -1121,7 +1087,7 @@ onUnmounted(() => {
 .favorite-icon {
   width: 20px;
   height: 20px;
-  color: #666;
+  color: #cccccc;
   transition: color 0.3s ease;
 }
 
@@ -1137,7 +1103,6 @@ onUnmounted(() => {
   border-radius: 12px;
   box-shadow: 0 4px 20px rgba(0,0,0,0.5);
   color: #ffffff;
-  border: 1px solid rgb(60, 60, 60);
 }
 
 /* 分页 */
@@ -1148,7 +1113,6 @@ onUnmounted(() => {
   border-radius: 12px;
   box-shadow: 0 4px 20px rgba(0,0,0,0.5);
   color: #ffffff;
-  border: 1px solid rgb(60, 60, 60);
 }
 
 /* 深色主题分页样式 */
@@ -1179,23 +1143,13 @@ onUnmounted(() => {
   color: #cccccc !important;
 }
 
-:deep(.ant-pagination .ant-pagination-jump-prev, .ant-pagination .ant-pagination-jump-next) {
-  background: rgb(50, 50, 50) !important;
-  border-color: rgb(60, 60, 60) !important;
-  color: #cccccc !important;
-}
-
-:deep(.ant-pagination .ant-pagination-options) {
-  color: #cccccc !important;
-}
-
 :deep(.ant-pagination .ant-pagination-options-quick-jumper input) {
   background: rgb(50, 50, 50) !important;
   border-color: rgb(60, 60, 60) !important;
   color: #ffffff !important;
 }
 
-/* 全屏模态框样式 */
+/* 全屏模态框样式 - 复用 */
 :global(.fullscreen-modal) {
   top: 0 !important;
   left: 0 !important;
@@ -1238,7 +1192,6 @@ onUnmounted(() => {
   display: none !important;
 }
 
-/* 确保模态框中的图片没有默认样式 */
 :global(.fullscreen-modal img) {
   border: none !important;
   outline: none !important;
@@ -1247,20 +1200,17 @@ onUnmounted(() => {
   padding: 0 !important;
 }
 
-/* 禁用模态框遮罩动画 */
 :global(.fullscreen-modal .ant-modal-mask) {
   animation: none !important;
   transition: none !important;
   opacity: 1 !important;
 }
 
-/* 禁用模态框包装器动画 */
 :global(.fullscreen-modal .ant-modal-wrap) {
   animation: none !important;
   transition: none !important;
 }
 
-/* 全屏模态框打开时禁用body滚动 */
 :global(body.modal-open) {
   overflow: hidden !important;
   height: 100vh !important;
@@ -1306,6 +1256,56 @@ onUnmounted(() => {
   display: flex;
   align-items: center;
   gap: 10px;
+}
+
+.zoom-controls {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  background: rgba(50, 50, 50, 0.9);
+  padding: 5px 10px;
+  border-radius: 8px;
+  backdrop-filter: blur(5px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
+  border: 1px solid rgba(80, 80, 80, 0.8);
+}
+
+.zoom-btn {
+  background: none !important;
+  border: none !important;
+  color: white !important;
+  font-size: 20px;
+  font-weight: bold;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+  opacity: 0.8;
+}
+
+.zoom-btn:hover {
+  background: rgba(255, 255, 255, 0.2) !important;
+  opacity: 1;
+}
+
+.reset-btn {
+  background: rgba(255, 255, 255, 0.2) !important;
+  border: none !important;
+  color: white !important;
+  font-size: 14px;
+  font-weight: 500;
+  padding: 5px 10px;
+  border-radius: 8px;
+  transition: all 0.3s ease;
+  opacity: 0.8;
+}
+
+.reset-btn:hover {
+  background: rgba(255, 255, 255, 0.3) !important;
+  opacity: 1;
 }
 
 .preview-counter {
@@ -1377,6 +1377,14 @@ onUnmounted(() => {
   cursor: grabbing;
 }
 
+.zoom-ratio {
+  color: white;
+  font-size: 14px;
+  font-weight: 500;
+  min-width: 40px;
+  text-align: center;
+}
+
 .nav-btn {
   position: fixed;
   top: 50%;
@@ -1430,40 +1438,13 @@ onUnmounted(() => {
   justify-content: center;
 }
 
-.author-info {
+.upload-info {
   color: #fff;
   font-style: italic;
   margin: 0;
   font-size: 12px;
   opacity: 0.9;
   text-shadow: 0 0 4px rgba(0, 0, 0, 0.8), 0 0 8px rgba(0, 0, 0, 0.6);
-}
-
-.usage-tip {
-  color: #fff;
-  font-size: 12px;
-  opacity: 0.8;
-  margin-top: 5px;
-  text-shadow: 0 0 4px rgba(0, 0, 0, 0.8), 0 0 8px rgba(0, 0, 0, 0.6);
-}
-
-.mobile-tip {
-  display: none;
-}
-
-.desktop-tip {
-  display: inline;
-}
-
-/* 移动端显示不同的提示 */
-@media (max-width: 768px) {
-  .mobile-tip {
-    display: inline;
-  }
-
-  .desktop-tip {
-    display: none;
-  }
 }
 
 /* 固定在屏幕右下角的收藏按钮 */
@@ -1515,67 +1496,44 @@ onUnmounted(() => {
   color: #1890ff;
 }
 
-/* 缩放控制按钮 */
-.zoom-controls {
-  display: flex;
-  align-items: center;
-  gap: 5px;
-  background: rgba(50, 50, 50, 0.9);
-  padding: 5px 10px;
-  border-radius: 8px;
-  backdrop-filter: blur(5px);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
-  border: 1px solid rgba(80, 80, 80, 0.8);
-}
-
-.zoom-btn {
-  background: none !important;
-  border: none !important;
+.preview-heart-btn {
   color: white !important;
-  font-size: 20px;
+  font-size: 24px;
   font-weight: bold;
-  width: 30px;
-  height: 30px;
+  width: 40px;
+  height: 40px;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
   transition: all 0.3s ease;
-  opacity: 0.8;
 }
 
-.zoom-btn:hover {
+.preview-heart-btn:hover {
   background: rgba(255, 255, 255, 0.2) !important;
-  opacity: 1;
+  transform: scale(1.1);
 }
 
-.zoom-ratio {
+.preview-heart-btn.favorited {
+  background: rgba(255, 255, 255, 0.1) !important;
+}
+
+.preview-heart-btn .favorite-icon {
+  width: 24px;
+  height: 24px;
   color: white;
-  font-size: 14px;
-  font-weight: 500;
-  min-width: 40px;
-  text-align: center;
 }
 
-.reset-btn {
-  background: rgba(255, 255, 255, 0.2) !important;
-  border: none !important;
-  color: white !important;
-  font-size: 14px;
-  font-weight: 500;
-  padding: 5px 10px;
-  border-radius: 8px;
-  transition: all 0.3s ease;
-  opacity: 0.8;
-}
-
-.reset-btn:hover {
-  background: rgba(255, 255, 255, 0.3) !important;
-  opacity: 1;
+.preview-heart-btn.favorited .favorite-icon {
+  color: #1890ff;
 }
 
 /* 响应式设计 */
 @media (max-width: 768px) {
+  .page-title {
+    font-size: 2rem;
+  }
+
   .grid-container {
     grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
     gap: 10px;
@@ -1586,24 +1544,10 @@ onUnmounted(() => {
     padding: 10px 0 8px 0;
     margin-bottom: 8px;
   }
-
-  .sort-wrapper {
-    flex-direction: row;
-    align-items: center;
-    gap: 4px;
-  }
-
-  .sort-label {
-    font-size: 0.85rem;
-  }
-
-  .simple-select .ant-select-selection-item {
-    font-size: 0.85rem !important;
-  }
 }
 
 @media (max-width: 600px) {
-  #favoritePicturePage {
+  #myPicturesPage {
     padding: 0 5px;
   }
 
@@ -1622,147 +1566,6 @@ onUnmounted(() => {
     height: auto;
     min-height: 200px;
     border-radius: 4px;
-  }
-
-  /* 移动端预览样式 */
-  .preview-image {
-    max-width: calc(100vw - 20px);
-    max-height: calc(100vh - 100px);
-    width: auto;
-    height: auto;
-    border: none !important;
-    outline: none !important;
-    box-shadow: none !important;
-    animation: none !important;
-    transition: transform 0.1s ease;
-    transform-origin: center;
-    object-fit: contain;
-    cursor: grab;
-  }
-
-  .preview-image:active {
-    cursor: grabbing;
-  }
-
-  .preview-image.zoomed {
-    cursor: move;
-  }
-
-  /* 移动端缩放控制 */
-  .zoom-controls {
-    gap: 3px;
-    padding: 3px 8px;
-    border-radius: 6px;
-  }
-
-  .zoom-btn {
-    width: 25px;
-    height: 25px;
-    font-size: 16px;
-  }
-
-  .zoom-ratio {
-    font-size: 12px;
-    min-width: 35px;
-  }
-
-  .reset-btn {
-    font-size: 12px;
-    padding: 3px 8px;
-    border-radius: 6px;
-  }
-
-  .nav-btn {
-    width: 40px;
-    height: 40px;
-    font-size: 24px;
-    z-index: 1002;
-  }
-
-  .nav-btn-left {
-    left: 10px;
-  }
-
-  .nav-btn-right {
-    right: 10px;
-  }
-
-  .preview-header {
-    padding: 10px 15px;
-    height: 50px;
-    z-index: 1003;
-  }
-
-  /* 移动端预览收藏按钮样式 */
-  .preview-favorite-btn {
-    bottom: 15px;
-    right: 15px;
-  }
-
-  .preview-favorite-btn .preview-heart-btn {
-    width: 44px !important;
-    height: 44px !important;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4) !important;
-  }
-
-  .preview-favorite-btn .favorite-icon {
-    width: 20px;
-    height: 20px;
-  }
-
-  .preview-info {
-    padding: 10px;
-    height: 70px;
-    z-index: 1003;
-  }
-
-  .author-info {
-    font-size: 11px;
-  }
-
-  .pagination-container {
-    padding: 15px 0;
-    margin-top: 10px;
-  }
-}
-
-@media (max-width: 480px) {
-  #favoritePicturePage {
-    padding: 0 3px;
-  }
-
-  .grid-container {
-    grid-template-columns: 1fr;
-    gap: 6px;
-    padding: 0;
-  }
-
-  .picture-card {
-    border-radius: 2px;
-    max-width: 100%;
-  }
-
-  .image-container {
-    height: auto;
-    min-height: 150px;
-    border-radius: 2px;
-  }
-
-  .sort-section {
-    padding: 8px 0 6px 0;
-    margin-bottom: 6px;
-  }
-
-  .sort-wrapper {
-    gap: 3px;
-  }
-
-  .sort-label {
-    font-size: 0.8rem;
-  }
-
-  .simple-select .ant-select-selection-item {
-    font-size: 0.8rem !important;
   }
 }
 </style>

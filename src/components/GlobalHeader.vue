@@ -74,6 +74,11 @@ const originItems =[
     title: '我的收藏',
   },
   {
+    key: '/myPictures',
+    label: '我的上传',
+    title: '我的上传',
+  },
+  {
     key: '/admin/userManage',
     label: '用户管理',
     title: '用户管理',

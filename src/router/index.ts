@@ -7,6 +7,7 @@ import AddPicturePage from '@/pages/picture/AddPicturePage.vue'
 import PictureManagePage from '@/pages/admin/PictureManagePage.vue'
 import PictureShowPage from '@/pages/picture/PictureShowPage.vue'
 import FavoritePicturePage from '@/pages/picture/FavoritePicturePage.vue'
+import MyPicturesPage from '@/pages/picture/MyPicturesPage.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -50,6 +51,11 @@ const router = createRouter({
       path: '/favoritePicture',
       name: '图片收藏',
       component: FavoritePicturePage,
+    },
+    {
+      path: '/myPictures',
+      name: '我的上传',
+      component: MyPicturesPage,
     },
   ],
 })
