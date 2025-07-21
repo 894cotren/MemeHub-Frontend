@@ -1,7 +1,7 @@
 <template>
-  <div id="addPicture">
+  <div id="addPicture" class="dark-theme">
     <!-- 标题   -->
-    <h2 style="margin-bottom: 16px ;text-align: center">
+    <h2 style="margin-bottom: 16px; text-align: center; color: #ffffff;">
       {{ route.query?.id ? '修改图片' : '创建图片' }}
     </h2>
     <!--    图片上传-->
@@ -146,6 +146,123 @@ onMounted(() => {
   getOldPicture()
 })
 </script>
+
+<style scoped>
+.dark-theme {
+  background: rgb(34, 34, 34);
+  min-height: 100vh;
+  padding: 20px;
+  color: #ffffff;
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+/* 覆盖 Ant Design 组件样式 */
+:deep(.ant-form) {
+  background: transparent;
+}
+
+:deep(.ant-input) {
+  background: rgb(50, 50, 50) !important;
+  border-color: rgb(60, 60, 60) !important;
+  color: #ffffff !important;
+}
+
+:deep(.ant-input:hover) {
+  border-color: rgb(80, 80, 80) !important;
+}
+
+:deep(.ant-input:focus) {
+  border-color: #40a9ff !important;
+  box-shadow: 0 0 0 2px rgba(64, 169, 255, 0.2) !important;
+}
+
+:deep(.ant-textarea) {
+  background: rgb(50, 50, 50) !important;
+  border-color: rgb(60, 60, 60) !important;
+  color: #ffffff !important;
+}
+
+:deep(.ant-textarea:hover) {
+  border-color: rgb(80, 80, 80) !important;
+}
+
+:deep(.ant-textarea:focus) {
+  border-color: #40a9ff !important;
+  box-shadow: 0 0 0 2px rgba(64, 169, 255, 0.2) !important;
+}
+
+:deep(.ant-btn-primary) {
+  background: #40a9ff !important;
+  border-color: #40a9ff !important;
+  font-size: 16px !important;
+  height: 40px !important;
+}
+
+:deep(.ant-btn-primary:hover) {
+  background: #69c0ff !important;
+  border-color: #69c0ff !important;
+}
+
+:deep(.ant-select) {
+  color: #ffffff !important;
+}
+
+:deep(.ant-select-selector) {
+  background: rgb(50, 50, 50) !important;
+  border-color: rgb(60, 60, 60) !important;
+  color: #ffffff !important;
+}
+
+:deep(.ant-select-arrow) {
+  color: #ffffff !important;
+}
+
+:deep(.ant-select-dropdown) {
+  background: rgb(50, 50, 50) !important;
+}
+
+:deep(.ant-select-item) {
+  color: #ffffff !important;
+}
+
+:deep(.ant-select-item-option-selected) {
+  background: rgba(64, 169, 255, 0.2) !important;
+  color: #69c0ff !important;
+}
+
+:deep(.ant-auto-complete) {
+  color: #ffffff !important;
+}
+
+:deep(.ant-auto-complete .ant-select-selector) {
+  background: rgb(50, 50, 50) !important;
+  border-color: rgb(60, 60, 60) !important;
+  color: #ffffff !important;
+}
+
+:deep(.ant-form-item-label > label) {
+  color: #ffffff !important;
+  font-weight: 500 !important;
+}
+
+:deep(.ant-upload) {
+  background: rgb(50, 50, 50) !important;
+  border-color: rgb(60, 60, 60) !important;
+}
+
+:deep(.ant-upload:hover) {
+  border-color: #40a9ff !important;
+}
+
+:deep(.ant-upload-text) {
+  color: #cccccc !important;
+}
+
+:deep(.ant-upload-hint) {
+  color: #999999 !important;
+}
+</style>
 
 <style scoped>
 #addPicture {

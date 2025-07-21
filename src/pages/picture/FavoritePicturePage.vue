@@ -1,7 +1,7 @@
 
 <template>
   <div id="favoritePicturePage">
-    <h2 style="margin-bottom: 16px ;text-align: center">我的收藏</h2>
+    <h2 style="margin-bottom: 16px; text-align: center; color: #ffffff;">我的收藏</h2>
 
     <!-- 加载状态 -->
     <div v-if="loading" class="loading-container">
@@ -838,14 +838,16 @@ onUnmounted(() => {
 <style scoped>
 #favoritePicturePage {
   min-height: 100vh;
-  background: #fafafa;
+  background: rgb(34, 34, 34);
   padding: 30px 20px;
+  color: #ffffff;
 }
 
 /* 加载状态 */
 .loading-container {
   text-align: center;
   padding: 100px 0;
+  color: #ffffff;
 }
 
 /* 图片网格 */
@@ -861,10 +863,11 @@ onUnmounted(() => {
 }
 
 .picture-card {
-  background: white;
+  background: rgb(50, 50, 50);
   border-radius: 12px;
   overflow: hidden;
-  box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+  box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+  border: 1px solid rgb(60, 60, 60);
   transition: all 0.3s ease;
   cursor: pointer;
   position: relative;
@@ -872,7 +875,8 @@ onUnmounted(() => {
 
 .picture-card:hover {
   transform: translateY(-5px);
-  box-shadow: 0 8px 30px rgba(0,0,0,0.15);
+  box-shadow: 0 8px 30px rgba(0,0,0,0.7);
+  border-color: rgb(80, 80, 80);
 }
 
 .image-container {
@@ -1014,18 +1018,66 @@ onUnmounted(() => {
 .no-data {
   text-align: center;
   padding: 80px 0;
-  background: white;
+  background: rgb(50, 50, 50);
   border-radius: 12px;
-  box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+  box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+  color: #ffffff;
+  border: 1px solid rgb(60, 60, 60);
 }
 
 /* 分页 */
 .pagination-container {
   text-align: center;
   padding: 25px 0;
-  background: white;
+  background: rgb(50, 50, 50);
   border-radius: 12px;
-  box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+  box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+  color: #ffffff;
+  border: 1px solid rgb(60, 60, 60);
+}
+
+/* 深色主题分页样式 */
+:deep(.ant-pagination .ant-pagination-item) {
+  background: rgb(50, 50, 50) !important;
+  border-color: rgb(60, 60, 60) !important;
+}
+
+:deep(.ant-pagination .ant-pagination-item a) {
+  color: #cccccc !important;
+}
+
+:deep(.ant-pagination .ant-pagination-item-active) {
+  background: rgb(60, 60, 60) !important;
+  border-color: rgb(80, 80, 80) !important;
+}
+
+:deep(.ant-pagination .ant-pagination-item-active a) {
+  color: #ffffff !important;
+}
+
+:deep(.ant-pagination .ant-pagination-prev, .ant-pagination .ant-pagination-next) {
+  background: rgb(50, 50, 50) !important;
+  border-color: rgb(60, 60, 60) !important;
+}
+
+:deep(.ant-pagination .ant-pagination-prev a, .ant-pagination .ant-pagination-next a) {
+  color: #cccccc !important;
+}
+
+:deep(.ant-pagination .ant-pagination-jump-prev, .ant-pagination .ant-pagination-jump-next) {
+  background: rgb(50, 50, 50) !important;
+  border-color: rgb(60, 60, 60) !important;
+  color: #cccccc !important;
+}
+
+:deep(.ant-pagination .ant-pagination-options) {
+  color: #cccccc !important;
+}
+
+:deep(.ant-pagination .ant-pagination-options-quick-jumper input) {
+  background: rgb(50, 50, 50) !important;
+  border-color: rgb(60, 60, 60) !important;
+  color: #ffffff !important;
 }
 
 /* 全屏模态框样式 */

@@ -1,6 +1,6 @@
 <template>
   <div id="basicLayout">
-    <a-layout style="min-height: 100vh">
+    <a-layout style="min-height: 100vh; background: rgb(34, 34, 34);">
       <a-layout-header class="header">
         <GlobalHeader />
       </a-layout-header>
@@ -17,25 +17,56 @@ import GlobalHeader from '@/components/GlobalHeader.vue'
 </script>
 
 <style scoped>
+#basicLayout {
+  background: rgb(34, 34, 34);
+}
+
+/* 确保 Ant Design Layout 组件背景正确 */
+:deep(.ant-layout) {
+  background: rgb(34, 34, 34) !important;
+}
+
 #basicLayout .footer {
-  background: #efefef;
+  background: rgb(50, 50, 50);
   padding: 16px;
   /*position: fixed;*/
   bottom: 0;
   left: 0;
   right: 0;
   text-align: center;
+  color: #ffffff;
+  border-top: 1px solid rgb(50, 50, 50);
+  margin-top: 0;
+}
+
+/* 确保footer组件样式正确 */
+:deep(.ant-layout-footer) {
+  background: rgb(50, 50, 50) !important;
+  margin-top: 0 !important;
+  padding: 16px !important;
+}
+
+/* 全局背景保险 */
+:deep(body) {
+  background: rgb(34, 34, 34) !important;
+}
+
+:deep(html) {
+  background: rgb(34, 34, 34) !important;
 }
 
 #basicLayout .content {
-  background: linear-gradient(to right, #fefefe, #fff);
-  margin-bottom: 28px;
+  background: rgb(34, 34, 34);
   padding: 20px;
+  min-height: calc(100vh - 140px);
+  margin: 0;
 }
+
 #basicLayout .header {
   padding-inline: 20px;
 /*  margin-bottom: 0px;*/
-  color: unset;
-  background: white;
+  color: #ffffff;
+  background: rgb(50, 50, 50);
+  border-bottom: 1px solid rgb(60, 60, 60);
 }
 </style>

@@ -854,8 +854,9 @@ onUnmounted(() => {
 <style scoped>
 #pictureShowPage {
   min-height: 100vh;
-  background: #fafafa;
+  background: rgb(34, 34, 34);
   padding: 0 20px;
+  color: #ffffff;
 }
 
 /* 页面头部 */
@@ -894,7 +895,7 @@ onUnmounted(() => {
 
 .sort-label {
   font-size: 0.9rem;
-  color: #666;
+  color: #cccccc;
   white-space: nowrap;
 }
 
@@ -913,14 +914,14 @@ onUnmounted(() => {
 }
 
 .simple-select .ant-select-selection-item {
-  color: #1890ff !important;
+  color: #cccccc !important;
   font-size: 0.9rem !important;
   padding-right: 0 !important;
   line-height: 1.4 !important;
 }
 
 .simple-select .ant-select-arrow {
-  color: #1890ff !important;
+  color: #cccccc !important;
   font-size: 10px !important;
   right: -2px !important;
 }
@@ -938,12 +939,34 @@ onUnmounted(() => {
   box-shadow: none !important;
 }
 
+/* 排序下拉选项样式 */
+:deep(.ant-select-dropdown) {
+  background: rgb(50, 50, 50) !important;
+  border: 1px solid rgb(60, 60, 60) !important;
+}
+
+:deep(.ant-select-item) {
+  color: #cccccc !important;
+  background: rgb(50, 50, 50) !important;
+}
+
+:deep(.ant-select-item:hover) {
+  background: rgba(64, 169, 255, 0.1) !important;
+  color: #40a9ff !important;
+}
+
+:deep(.ant-select-item-option-selected) {
+  background: rgba(64, 169, 255, 0.2) !important;
+  color: #69c0ff !important;
+}
+
 
 
 /* 加载状态 */
 .loading-container {
   text-align: center;
   padding: 100px 0;
+  color: #ffffff;
 }
 
 /* 图片网格 */
@@ -959,10 +982,11 @@ onUnmounted(() => {
 }
 
 .picture-card {
-  background: white;
+  background: rgb(50, 50, 50);
   border-radius: 12px;
   overflow: hidden;
-  box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+  box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+  border: 1px solid rgb(60, 60, 60);
   transition: all 0.3s ease;
   cursor: pointer;
   position: relative;
@@ -970,7 +994,8 @@ onUnmounted(() => {
 
 .picture-card:hover {
   transform: translateY(-5px);
-  box-shadow: 0 8px 30px rgba(0,0,0,0.15);
+  box-shadow: 0 8px 30px rgba(0,0,0,0.7);
+  border-color: rgb(80, 80, 80);
 }
 
 .image-container {
@@ -1016,9 +1041,9 @@ onUnmounted(() => {
   left: 0;
   right: 0;
   bottom: 0;
-  background: linear-gradient(to bottom, transparent 0%, rgba(0,0,0,0.7) 100%);
+  background: linear-gradient(to bottom, transparent 0%, rgba(0,0,0,0.9) 100%);
   opacity: 0;
-  transition: opacity 0.3s ease;
+  transition: all 0.4s ease;
   display: flex;
   align-items: flex-end;
   padding: 20px;
@@ -1090,8 +1115,8 @@ onUnmounted(() => {
 }
 
 .heart-btn {
-  background: rgba(255, 255, 255, 0.9) !important;
-  border: none !important;
+  background: rgba(50, 50, 50, 0.9) !important;
+  border: 1px solid rgba(80, 80, 80, 0.8) !important;
   width: 44px !important;
   height: 44px !important;
   border-radius: 50% !important;
@@ -1100,13 +1125,14 @@ onUnmounted(() => {
   justify-content: center !important;
   backdrop-filter: blur(5px);
   transition: all 0.3s ease !important;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15) !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.5) !important;
 }
 
 .heart-btn:hover {
-  background: rgba(255, 255, 255, 1) !important;
+  background: rgba(70, 70, 70, 1) !important;
   transform: scale(1.1) !important;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2) !important;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.7) !important;
+  border-color: rgba(100, 100, 100, 1) !important;
 }
 
 .heart-btn.favorited {
@@ -1116,7 +1142,7 @@ onUnmounted(() => {
 .favorite-icon {
   width: 20px;
   height: 20px;
-  color: #666;
+  color: #cccccc;
   transition: color 0.3s ease;
 }
 
@@ -1128,18 +1154,54 @@ onUnmounted(() => {
 .no-data {
   text-align: center;
   padding: 80px 0;
-  background: white;
+  background: rgb(50, 50, 50);
   border-radius: 12px;
-  box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+  box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+  color: #ffffff;
 }
 
 /* 分页 */
 .pagination-container {
   text-align: center;
   padding: 25px 0;
-  background: white;
+  background: rgb(50, 50, 50);
   border-radius: 12px;
-  box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+  box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+  color: #ffffff;
+}
+
+/* 深色主题分页样式 */
+:deep(.ant-pagination .ant-pagination-item) {
+  background: rgb(50, 50, 50) !important;
+  border-color: rgb(60, 60, 60) !important;
+}
+
+:deep(.ant-pagination .ant-pagination-item a) {
+  color: #cccccc !important;
+}
+
+:deep(.ant-pagination .ant-pagination-item-active) {
+  background: rgb(60, 60, 60) !important;
+  border-color: rgb(80, 80, 80) !important;
+}
+
+:deep(.ant-pagination .ant-pagination-item-active a) {
+  color: #ffffff !important;
+}
+
+:deep(.ant-pagination .ant-pagination-prev, .ant-pagination .ant-pagination-next) {
+  background: rgb(50, 50, 50) !important;
+  border-color: rgb(60, 60, 60) !important;
+}
+
+:deep(.ant-pagination .ant-pagination-prev a, .ant-pagination .ant-pagination-next a) {
+  color: #cccccc !important;
+}
+
+:deep(.ant-pagination .ant-pagination-options-quick-jumper input) {
+  background: rgb(50, 50, 50) !important;
+  border-color: rgb(60, 60, 60) !important;
+  color: #ffffff !important;
 }
 
 /* 全屏模态框样式 */
@@ -1218,7 +1280,7 @@ onUnmounted(() => {
 /* 预览模态框 */
 .preview-content {
   position: relative;
-  background: #000;
+  background: rgb(34, 34, 34);
   height: 100vh;
   width: 100vw;
   display: block;
@@ -1236,7 +1298,7 @@ onUnmounted(() => {
   justify-content: space-between;
   align-items: center;
   padding: 15px 20px;
-  background: rgba(0, 0, 0, 0.8);
+  background: rgba(34, 34, 34, 0.95);
   color: white;
   position: fixed;
   top: 0;
@@ -1259,11 +1321,12 @@ onUnmounted(() => {
   display: flex;
   align-items: center;
   gap: 5px;
-  background: rgba(0, 0, 0, 0.6);
+  background: rgba(50, 50, 50, 0.9);
   padding: 5px 10px;
   border-radius: 8px;
   backdrop-filter: blur(5px);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
+  border: 1px solid rgba(80, 80, 80, 0.8);
 }
 
 .zoom-btn {
@@ -1351,8 +1414,8 @@ onUnmounted(() => {
 }
 
 .preview-favorite-btn .preview-heart-btn {
-  background: rgba(0, 0, 0, 0.6) !important;
-  border: none !important;
+  background: rgba(50, 50, 50, 0.9) !important;
+  border: 1px solid rgba(80, 80, 80, 0.8) !important;
   color: white !important;
   width: 50px !important;
   height: 50px !important;
@@ -1362,12 +1425,13 @@ onUnmounted(() => {
   justify-content: center !important;
   backdrop-filter: blur(5px);
   transition: all 0.3s ease !important;
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.3) !important;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.5) !important;
 }
 
 .preview-favorite-btn .preview-heart-btn:hover {
-  background: rgba(0, 0, 0, 0.8) !important;
+  background: rgba(70, 70, 70, 1) !important;
   transform: scale(1.1) !important;
+  border-color: rgba(100, 100, 100, 1) !important;
 }
 
 .preview-favorite-btn .preview-heart-btn.favorited {
@@ -1465,7 +1529,7 @@ onUnmounted(() => {
   position: fixed;
   top: 50%;
   transform: translateY(-50%);
-  background: rgba(0, 0, 0, 0.6) !important;
+  background: rgba(50, 50, 50, 0.9) !important;
   color: white !important;
   font-size: 32px;
   font-weight: bold;
@@ -1479,13 +1543,14 @@ onUnmounted(() => {
   transition: all 0.3s ease;
   backdrop-filter: blur(5px);
   pointer-events: auto;
-  border: none !important;
+  border: 1px solid rgba(80, 80, 80, 0.8) !important;
   outline: none !important;
 }
 
 .nav-btn:hover {
-  background: rgba(0, 0, 0, 0.8) !important;
+  background: rgba(70, 70, 70, 1) !important;
   transform: translateY(-50%) scale(1.1);
+  border-color: rgba(100, 100, 100, 1) !important;
 }
 
 .nav-btn-left {
@@ -1567,6 +1632,7 @@ onUnmounted(() => {
 
   .simple-select .ant-select-selection-item {
     font-size: 0.85rem !important;
+    color: #cccccc !important;
   }
 }
 
@@ -1635,6 +1701,7 @@ onUnmounted(() => {
 
   .simple-select .ant-select-selection-item {
     font-size: 0.8rem !important;
+    color: #cccccc !important;
   }
 
   /* 移动端收藏按钮样式 */

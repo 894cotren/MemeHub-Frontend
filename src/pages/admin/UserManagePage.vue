@@ -1,5 +1,5 @@
 <template>
-  <div id="userManagePage">
+  <div id="userManagePage" class="dark-theme">
     <!--    分页查询用的表单-->
     <a-form layout="inline" :model="searchParams" @finish="doSearch">
       <a-form-item label="账号">
@@ -287,3 +287,213 @@ const onOk = async () => {
 };
 
 </script>
+
+<style scoped>
+.dark-theme {
+  background: rgb(34, 34, 34);
+  min-height: 100vh;
+  padding: 20px;
+  color: #ffffff;
+}
+
+/* 覆盖 Ant Design 组件样式 */
+:deep(.ant-form) {
+  background: transparent;
+}
+
+:deep(.ant-input) {
+  background: rgb(50, 50, 50) !important;
+  border-color: rgb(60, 60, 60) !important;
+  color: #ffffff !important;
+}
+
+:deep(.ant-input:hover) {
+  border-color: rgb(80, 80, 80) !important;
+  background: rgb(50, 50, 50) !important;
+}
+
+:deep(.ant-input:focus) {
+  border-color: #40a9ff !important;
+  box-shadow: 0 0 0 2px rgba(64, 169, 255, 0.2) !important;
+  background: rgb(50, 50, 50) !important;
+}
+
+:deep(.ant-input-affix-wrapper) {
+  background: rgb(50, 50, 50) !important;
+  border-color: rgb(60, 60, 60) !important;
+}
+
+:deep(.ant-input-affix-wrapper:hover) {
+  background: rgb(50, 50, 50) !important;
+  border-color: rgb(80, 80, 80) !important;
+}
+
+:deep(.ant-input-affix-wrapper:focus-within) {
+  background: rgb(50, 50, 50) !important;
+  border-color: #40a9ff !important;
+  box-shadow: 0 0 0 2px rgba(64, 169, 255, 0.2) !important;
+}
+
+:deep(.ant-input-affix-wrapper .ant-input) {
+  background: transparent !important;
+}
+
+/* 确保输入框在所有状态下都是深色 */
+:deep(input) {
+  background: rgb(50, 50, 50) !important;
+  color: #ffffff !important;
+}
+
+:deep(input:focus) {
+  background: rgb(50, 50, 50) !important;
+}
+
+:deep(input:hover) {
+  background: rgb(50, 50, 50) !important;
+}
+
+:deep(.ant-btn-primary) {
+  background: #40a9ff !important;
+  border-color: #40a9ff !important;
+}
+
+:deep(.ant-btn-primary:hover) {
+  background: #69c0ff !important;
+  border-color: #69c0ff !important;
+}
+
+:deep(.ant-table) {
+  background: rgb(50, 50, 50) !important;
+  color: #ffffff !important;
+}
+
+:deep(.ant-table-thead > tr > th) {
+  background: rgb(60, 60, 60) !important;
+  color: #ffffff !important;
+  border-bottom: 1px solid rgb(80, 80, 80) !important;
+}
+
+:deep(.ant-table-tbody > tr > td) {
+  background: rgb(50, 50, 50) !important;
+  color: #ffffff !important;
+  border-bottom: 1px solid rgb(60, 60, 60) !important;
+}
+
+:deep(.ant-table-tbody > tr:hover > td) {
+  background: rgb(60, 60, 60) !important;
+}
+
+:deep(.ant-pagination) {
+  color: #cccccc !important;
+}
+
+:deep(.ant-pagination .ant-pagination-item) {
+  background: rgb(50, 50, 50) !important;
+  border-color: rgb(60, 60, 60) !important;
+}
+
+:deep(.ant-pagination .ant-pagination-item a) {
+  color: #cccccc !important;
+}
+
+:deep(.ant-pagination .ant-pagination-item-active) {
+  background: rgb(60, 60, 60) !important;
+  border-color: rgb(80, 80, 80) !important;
+}
+
+:deep(.ant-pagination .ant-pagination-item-active a) {
+  color: #ffffff !important;
+}
+
+:deep(.ant-pagination .ant-pagination-prev, .ant-pagination .ant-pagination-next) {
+  background: rgb(50, 50, 50) !important;
+  border-color: rgb(60, 60, 60) !important;
+}
+
+:deep(.ant-pagination .ant-pagination-prev a, .ant-pagination .ant-pagination-next a) {
+  color: #cccccc !important;
+}
+
+:deep(.ant-pagination .ant-pagination-options-quick-jumper input) {
+  background: rgb(50, 50, 50) !important;
+  border-color: rgb(60, 60, 60) !important;
+  color: #ffffff !important;
+}
+
+:deep(.ant-tag-blue) {
+  background: rgba(64, 169, 255, 0.2) !important;
+  border-color: #40a9ff !important;
+  color: #69c0ff !important;
+}
+
+:deep(.ant-tag-green) {
+  background: rgba(82, 196, 26, 0.2) !important;
+  border-color: #52c41a !important;
+  color: #73d13d !important;
+}
+
+:deep(.ant-modal) {
+  color: #ffffff !important;
+}
+
+:deep(.ant-modal-content) {
+  background: rgb(50, 50, 50) !important;
+}
+
+:deep(.ant-modal-header) {
+  background: rgb(50, 50, 50) !important;
+  border-bottom: 1px solid rgb(60, 60, 60) !important;
+}
+
+:deep(.ant-modal-title) {
+  color: #ffffff !important;
+}
+
+:deep(.ant-form-item-label > label) {
+  color: #ffffff !important;
+}
+
+:deep(.ant-select) {
+  color: #ffffff !important;
+}
+
+:deep(.ant-select-selector) {
+  background: rgb(50, 50, 50) !important;
+  border-color: rgb(60, 60, 60) !important;
+  color: #ffffff !important;
+}
+
+:deep(.ant-select-arrow) {
+  color: #ffffff !important;
+}
+
+:deep(.ant-select-dropdown) {
+  background: rgb(50, 50, 50) !important;
+}
+
+:deep(.ant-select-item) {
+  color: #ffffff !important;
+}
+
+:deep(.ant-select-item-option-selected) {
+  background: rgba(64, 169, 255, 0.2) !important;
+  color: #69c0ff !important;
+}
+
+:deep(.ant-textarea) {
+  background: rgb(50, 50, 50) !important;
+  border-color: rgb(60, 60, 60) !important;
+  color: #ffffff !important;
+}
+
+:deep(.ant-btn-dangerous) {
+  background: #ff4d4f !important;
+  border-color: #ff4d4f !important;
+  color: #ffffff !important;
+}
+
+:deep(.ant-btn-dangerous:hover) {
+  background: #ff7875 !important;
+  border-color: #ff7875 !important;
+}
+</style>

@@ -149,18 +149,78 @@ const doLogout = async () => {
 </script>
 
 <style scoped>
+#globalHeader {
+  background: rgb(50, 50, 50);
+  color: #ffffff;
+}
+
 .title-bar {
   display: flex;
   align-items: center;
 }
 
 .title {
-  color: black;
+  color: #ffffff;
   font-size: 18px;
   margin-left: 16px;
+  font-weight: 500;
 }
 
 .logo {
   height: 48px;
+}
+
+.user-login-status {
+  color: #ffffff;
+}
+
+/* 覆盖 Ant Design 菜单的默认样式 */
+:deep(.ant-menu-horizontal) {
+  background: rgb(50, 50, 50) !important;
+  border-bottom: none !important;
+}
+
+:deep(.ant-menu-horizontal .ant-menu-item) {
+  color: #cccccc !important;
+  border-bottom: 2px solid transparent !important;
+}
+
+:deep(.ant-menu-horizontal .ant-menu-item:hover) {
+  color: #40a9ff !important;
+  border-bottom-color: #40a9ff !important;
+  background: rgba(64, 169, 255, 0.1) !important;
+}
+
+:deep(.ant-menu-horizontal .ant-menu-item-selected) {
+  color: #40a9ff !important;
+  border-bottom-color: #40a9ff !important;
+  background: rgba(64, 169, 255, 0.15) !important;
+}
+
+:deep(.ant-avatar) {
+  border: 2px solid rgba(80, 80, 80, 0.8);
+}
+
+:deep(.ant-dropdown-menu) {
+  background: rgb(50, 50, 50) !important;
+}
+
+:deep(.ant-dropdown-menu .ant-dropdown-menu-item) {
+  color: #cccccc !important;
+}
+
+:deep(.ant-dropdown-menu .ant-dropdown-menu-item:hover) {
+  background: rgba(64, 169, 255, 0.1) !important;
+  color: #40a9ff !important;
+}
+
+:deep(.ant-btn-primary) {
+  background: #40a9ff !important;
+  border-color: #40a9ff !important;
+}
+
+:deep(.ant-btn-primary:hover) {
+  background: #69c0ff !important;
+  border-color: #69c0ff !important;
 }
 </style>
