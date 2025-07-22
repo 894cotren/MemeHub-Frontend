@@ -8,6 +8,8 @@ import PictureManagePage from '@/pages/admin/PictureManagePage.vue'
 import PictureShowPage from '@/pages/picture/PictureShowPage.vue'
 import FavoritePicturePage from '@/pages/picture/FavoritePicturePage.vue'
 import MyPicturesPage from '@/pages/picture/MyPicturesPage.vue'
+import UserUpdatePage from '@/pages/user/UserUpdatePage.vue'
+import HomePage from '@/pages/HomePage.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -15,7 +17,7 @@ const router = createRouter({
     {
       path: '/',
       name: 'home',
-      component: HomeView,
+      component: HomePage,
     },
     {
       path: '/user/login',
@@ -52,11 +54,16 @@ const router = createRouter({
       name: '图片收藏',
       component: FavoritePicturePage,
     },
-    {
-      path: '/myPictures',
-      name: '我的上传',
-      component: MyPicturesPage,
-    },
+          {
+        path: '/myPictures',
+        name: '我的上传',
+        component: MyPicturesPage,
+      },
+      {
+        path: '/userUpdate',
+        name: '个人信息编辑',
+        component: UserUpdatePage,
+      },
   ],
 })
 

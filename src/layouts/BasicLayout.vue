@@ -7,7 +7,10 @@
       <a-layout-content class="content">
         <router-view />
       </a-layout-content>
-      <a-layout-footer class="footer"> MemeHub-Frontend</a-layout-footer>
+      <a-layout-footer class="footer">
+        <span>站长邮箱：awc20@qq.com | </span>
+        <a href="https://beian.miit.gov.cn" onclick="return confirm('即将跳转到工信部备案网站，是否继续？')">蜀ICP备2025148459号</a>
+      </a-layout-footer>
     </a-layout>
   </div>
 </template>

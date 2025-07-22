@@ -29,6 +29,14 @@ export async function userDeleteUsingPost(
   })
 }
 
+/** getCurrentUser GET /api/user/getCurrentUser */
+export async function getCurrentUserUsingGet(options?: { [key: string]: any }) {
+  return request<API.BaseResponseUserVO_>('/api/user/getCurrentUser', {
+    method: 'GET',
+    ...(options || {}),
+  })
+}
+
 /** getLoginUser GET /api/user/getLoginUser */
 export async function getLoginUserUsingGet(options?: { [key: string]: any }) {
   return request<API.BaseResponseLoginUserVO_>('/api/user/getLoginUser', {

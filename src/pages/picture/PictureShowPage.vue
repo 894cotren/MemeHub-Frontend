@@ -5,7 +5,7 @@
     <div class="sort-section">
       <div class="sort-wrapper">
         <span class="sort-label">排序：</span>
-        <a-select
+          <a-select
           v-model:value="currentSortOrder"
           size="small"
           class="simple-select"
@@ -14,7 +14,7 @@
         >
           <a-select-option value="descend">时间降序</a-select-option>
           <a-select-option value="ascend">时间升序</a-select-option>
-        </a-select>
+          </a-select>
       </div>
     </div>
 
@@ -146,47 +146,47 @@
           </div>
         </div>
 
-        <!-- 图片显示区域 -->
-        <div class="preview-image-container" @click="closePreview">
-          <!-- 左侧导航按钮 -->
-          <a-button
-            v-if="currentPictureIndex > 0"
-            class="nav-btn nav-btn-left"
-            type="text"
-            @click.stop="prevPicture"
-          >
-            ‹
-          </a-button>
+                  <!-- 图片显示区域 -->
+          <div class="preview-image-container" @click="closePreview">
+            <!-- 左侧导航按钮 -->
+            <a-button
+              v-if="currentPictureIndex > 0"
+              class="nav-btn nav-btn-left"
+              type="text"
+              @click.stop="prevPicture"
+            >
+              ‹
+            </a-button>
 
-          <!-- 图片 -->
-          <img
-            :src="currentPicture.picUrl"
-            :alt="currentPicture.picName || '图片'"
-            class="preview-image"
+            <!-- 图片 -->
+            <img
+              :src="currentPicture.picUrl"
+              :alt="currentPicture.picName || '图片'"
+              class="preview-image"
             :class="{
               zoomed: imageScale > 1,
               'can-drag': canDrag(),
               'dragging': isDragging
             }"
-            @click.stop
+              @click.stop
             @mousedown="handleMouseDown"
             @wheel="handleWheel"
             @touchstart="handleTouchStart"
             @touchmove="handleTouchMove"
             @touchend="handleTouchEnd"
             :style="{ transform: `translate(${imageTranslateX}px, ${imageTranslateY}px) scale(${imageScale})` }"
-          />
+            />
 
-          <!-- 右侧导航按钮 -->
-          <a-button
-            v-if="currentPictureIndex < pictureList.length - 1"
-            class="nav-btn nav-btn-right"
-            type="text"
-            @click.stop="nextPicture"
-          >
-            ›
-          </a-button>
-        </div>
+            <!-- 右侧导航按钮 -->
+            <a-button
+              v-if="currentPictureIndex < pictureList.length - 1"
+              class="nav-btn nav-btn-right"
+              type="text"
+              @click.stop="nextPicture"
+            >
+              ›
+            </a-button>
+          </div>
 
         <!-- 图片信息区域 -->
         <div class="preview-info" v-if="currentPicture.userName">

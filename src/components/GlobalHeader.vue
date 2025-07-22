@@ -19,16 +19,22 @@
       </a-col>
 
       <!-- 用户信息展示栏     -->
-      <a-col flex="100px">
+      <a-col flex="120px">
         <div class="user-login-status">
           <div v-if="loginUserStore.loginUser.id">
             <a-dropdown>
               <a-space>
                 <a-avatar :size="40" :src="loginUserStore.loginUser.userAvatar" />
-                {{ loginUserStore.loginUser.userName ?? '无名' }}
+                <span class="username">
+                  {{ loginUserStore.loginUser.userName ?? '无名' }}
+                </span>
               </a-space>
               <template #overlay>
                 <a-menu>
+                  <a-menu-item @click="toUserUpdate">
+                    <FormOutlined />
+                    个人信息
+                  </a-menu-item>
                   <a-menu-item @click="doLogout">
                     <LogoutOutlined />
                     退出登录
@@ -47,7 +53,7 @@
 </template>
 <script lang="ts" setup>
 import { computed, h, ref } from 'vue'
-import { HomeOutlined, LogoutOutlined } from '@ant-design/icons-vue'
+import { HomeOutlined, LogoutOutlined,FormOutlined } from '@ant-design/icons-vue'
 import { MenuProps, message } from 'ant-design-vue'
 import { useRouter } from 'vue-router'
 import { useLoginUserStore } from '@/stores/userLoginUserStore'
@@ -151,6 +157,18 @@ const doLogout = async () => {
     message.error('退出登录失败' + res.data.message)
   }
 }
+
+/**
+ * 跳转个人信息编辑页面
+ */
+const toUserUpdate = async () => {
+    if (!loginUserStore.loginUser?.id) {
+        message.warning('请先登录')
+        router.push('/user/login')
+        return
+    }
+    router.push(`/userUpdate?userId=${loginUserStore.loginUser.id}`)
+}
 </script>
 
 <style scoped>
@@ -227,5 +245,14 @@ const doLogout = async () => {
 :deep(.ant-btn-primary:hover) {
   background: #69c0ff !important;
   border-color: #69c0ff !important;
+}
+
+.username {
+  display: inline-block;
+  max-width: 80px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  vertical-align: middle; /* 文本垂直居中 */
 }
 </style>
