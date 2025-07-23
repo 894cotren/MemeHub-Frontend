@@ -53,6 +53,12 @@ declare namespace API {
     message?: string
   }
 
+  type BaseResponseBatchPictureUploadVO_ = {
+    code?: number
+    data?: BatchPictureUploadVO
+    message?: string
+  }
+
   type BaseResponsePutObjectResult_ = {
     code?: number
     data?: PutObjectResult
@@ -102,6 +108,24 @@ declare namespace API {
 
   type DeleteRequest = {
     id?: number
+  }
+
+  type BatchPictureUploadRequest = {
+    picNames?: string[]
+    introductions?: string[]
+    categories?: string[]
+    tagsList?: string[]
+  }
+
+  type BatchPictureUploadVO = {
+    failedList?: FailedUploadInfo[]
+    totalCount?: number
+    failedCount?: number
+  }
+
+  type FailedUploadInfo = {
+    fileName?: string
+    reason?: string
   }
 
   type FaceDetailInfos = {

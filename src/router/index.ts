@@ -10,6 +10,7 @@ import FavoritePicturePage from '@/pages/picture/FavoritePicturePage.vue'
 import MyPicturesPage from '@/pages/picture/MyPicturesPage.vue'
 import UserUpdatePage from '@/pages/user/UserUpdatePage.vue'
 import HomePage from '@/pages/HomePage.vue'
+import BatchUploadPicturePage from '@/pages/admin/BatchUploadPicturePage.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -40,6 +41,11 @@ const router = createRouter({
       component: AddPicturePage,
     },
     {
+      path: '/admin/batchUpload',
+      name: '批量添加图片',
+      component: BatchUploadPicturePage,
+    },
+    {
       path: '/admin/pictureManage',
       name: '图片管理',
       component: PictureManagePage,
@@ -54,7 +60,7 @@ const router = createRouter({
       name: '图片收藏',
       component: FavoritePicturePage,
     },
-          {
+    {
         path: '/myPictures',
         name: '我的上传',
         component: MyPicturesPage,

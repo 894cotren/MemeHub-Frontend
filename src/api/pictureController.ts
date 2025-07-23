@@ -201,6 +201,25 @@ export async function uploadPictureUsingPost(
   })
 }
 
+/** batchUploadPicture POST /api/picture/batchUpload */
+export async function batchUploadPictureUsingPost(
+  file?: File,
+  options?: { [key: string]: any }
+) {
+  const formData = new FormData()
+
+  if (file) {
+    formData.append('file', file)
+  }
+
+  return request<API.BaseResponseBatchPictureUploadVO_>('/api/picture/batchUpload', {
+    method: 'POST',
+    data: formData,
+    ...(options || {}),
+  })
+}
+
+
 /** uploadUserAvatar POST /api/picture/uploadUserAvatar */
 export async function uploadUserAvatarUsingPost(
   body: {},

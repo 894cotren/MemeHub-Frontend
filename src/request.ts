@@ -8,7 +8,7 @@ import { message } from 'ant-design-vue'
 const DEV_BASE_URL = "http://localhost:8123";
 const PROD_BASE_URL = "http://memehub.icu"; // 修改为域名，使用HTTP协议
 const myAxios = axios.create({
-  baseURL: PROD_BASE_URL,
+  baseURL: DEV_BASE_URL,
   timeout: 60000,
   withCredentials: true, // 确保跨域请求携带Cookie
 });
