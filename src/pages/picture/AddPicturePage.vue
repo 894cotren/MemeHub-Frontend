@@ -78,7 +78,8 @@ const handleSubmit = async (values: any) => {
     message.success('创建成功')
     // 跳转到图片详情页 TODO 图片详情页还没开发
     router.push({
-      path: `/picture/${pictureId}`,
+      // path: `/picture/${pictureId}`,
+      path: '/myPictures',
     })
   } else {
     message.error('创建失败，' + res.data.message)
