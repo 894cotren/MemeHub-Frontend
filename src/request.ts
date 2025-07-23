@@ -5,11 +5,12 @@ import { message } from 'ant-design-vue'
  * axios配置
  * 这里是请求的框架axios的配置。 有请求的基路径配置，有请求的拦截器配置，全局响应拦截器配置。
  */
-
+const DEV_BASE_URL = "http://localhost:8123";
+const PROD_BASE_URL = "http://memehub.icu"; // 修改为域名，使用HTTP协议
 const myAxios = axios.create({
-  baseURL: 'http://localhost:8123',
+  baseURL: PROD_BASE_URL,
   timeout: 60000,
-  withCredentials: true,
+  withCredentials: true, // 确保跨域请求携带Cookie
 });
 
 // 添加请求拦截器
@@ -33,12 +34,12 @@ myAxios.interceptors.response.use(
         'user/getLoginUser',        // 获取用户信息（正确路径）
         'picture/getPicturePagesVO' // 获取图片列表（允许未登录访问）
       ]
-      
+
       // 检查当前请求是否在白名单中
-      const isPublicApi = publicApiWhitelist.some(api => 
+      const isPublicApi = publicApiWhitelist.some(api =>
         response.request.responseURL.includes(api)
       )
-      
+
       // 不是白名单接口，并且用户目前不是已经在用户登录页面，则跳转到登录页面
       if (
         !isPublicApi &&

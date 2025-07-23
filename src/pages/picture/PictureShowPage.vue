@@ -191,7 +191,7 @@
         <!-- 图片信息区域 -->
         <div class="preview-info" v-if="currentPicture.userName">
           <p class="author-info">
-            贡献者：{{ currentPicture.userName }}
+            By：{{ currentPicture.userName }}
           </p>
         </div>
 

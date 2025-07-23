@@ -203,7 +203,7 @@
         <!-- 图片信息区域 -->
         <div class="preview-info" v-if="currentPicture.userName">
           <p class="author-info">
-            贡献者：{{ currentPicture.userName }}
+            By：{{ currentPicture.userName }}
           </p>
         </div>
 
@@ -409,7 +409,7 @@ const getImageActualSize = () => {
   if (!imageElement) {
     return { width: 0, height: 0 }
   }
-  
+
   return {
     width: imageElement.offsetWidth,
     height: imageElement.offsetHeight
@@ -420,7 +420,7 @@ const getImageActualSize = () => {
 const calculateDragLimits = () => {
   const containerWidth = window.innerWidth
   const containerHeight = window.innerHeight - 100 // 减去头部和底部UI区域
-  
+
   const actualImageSize = getImageActualSize()
   if (!actualImageSize.width || !actualImageSize.height) {
     return {
@@ -440,7 +440,7 @@ const calculateDragLimits = () => {
   // 判断是否溢出
   const overflowX = scaledWidth > containerWidth
   const overflowY = scaledHeight > containerHeight
-  
+
   // 只有溢出的方向才允许拖动
   const maxTranslateX = overflowX ? (scaledWidth - containerWidth) / 2 : 0
   const maxTranslateY = overflowY ? (scaledHeight - containerHeight) / 2 : 0
