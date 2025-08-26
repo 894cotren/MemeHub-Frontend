@@ -29,8 +29,8 @@
       <!-- 批量配置区域 -->
       <a-card title="批量配置" style="margin-bottom: 16px;">
         <a-form-item label="默认图片名称前缀" name="defaultPicNamePrefix">
-          <a-input 
-            v-model:value="batchForm.defaultPicNamePrefix" 
+          <a-input
+            v-model:value="batchForm.defaultPicNamePrefix"
             placeholder="请输入默认图片名称前缀（可选）"
             allowClear
           />
@@ -68,10 +68,10 @@
 
       <!-- 提交按钮 -->
       <a-form-item>
-        <a-button 
-          type="primary" 
-          html-type="submit" 
-          style="width: 100%" 
+        <a-button
+          type="primary"
+          html-type="submit"
+          style="width: 100%"
           :loading="uploading"
           :disabled="fileList.length === 0"
         >
@@ -182,16 +182,16 @@ const handleBatchUpload = async () => {
     const files = fileList.value
       .map(item => item.originFileObj)
       .filter((file): file is File => file !== undefined)
-    
+
     const failedList: any[] = []
     let successCount = 0
-    
+
     for (let i = 0; i < files.length; i++) {
       const file = files[i]
       if (!file) continue
-      
+
       try {
-        const res = await batchUploadPictureUsingPost(file)
+        const res = await batchUploadPictureUsingPost({},file)
         if (res.data.code === 20000 && res.data.data) {
           successCount++
         } else {
@@ -217,7 +217,7 @@ const handleBatchUpload = async () => {
 
     const successCountFinal = files.length - failedList.length
     message.success(`批量上传完成！成功: ${successCountFinal}，失败: ${failedList.length}`)
-    
+
     // 清空文件列表
     fileList.value = []
   } catch (error: any) {
