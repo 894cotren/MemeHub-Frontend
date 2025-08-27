@@ -4,8 +4,13 @@
     <h2 style="margin-bottom: 16px; text-align: center; color: #ffffff;">
       {{ route.query?.id ? '修改图片' : '创建图片' }}
     </h2>
+
+    <a-typography-paragraph v-if="spaceId" type="secondary">
+      保存至空间：<a :href="`/space/${spaceId}`" target="_blank">{{ spaceId }}</a>
+    </a-typography-paragraph>
+
     <!--    图片上传-->
-    <PictureUpload :picture="picture" :on-success="onSuccess" />
+    <PictureUpload :picture="picture" :spaceId="spaceId" :on-success="onSuccess" />
     <!-- 图片修改表单 -->
     <a-form v-if="picture" layout="vertical" :model="pictureForm" @finish="handleSubmit">
       <a-form-item label="名称" name="picName">
@@ -46,7 +51,7 @@
 
 <script setup lang="ts">
 import PictureUpload from '@/components/PictureUpload.vue'
-import { onMounted, reactive, ref } from 'vue'
+import { computed, onMounted, reactive, ref } from 'vue'
 import {
   getPictureVoByIdUsingGet,
   getTagCategoryListUsingGet,
@@ -60,6 +65,12 @@ const pictureForm = reactive<API.PictureUpdateRequest>({})
 
 const router = useRouter()
 
+//空间id
+const spaceId=computed(()=>{
+  return route.query?.spaceId
+})
+
+
 /**
  * 提交表单
  * @param values
@@ -72,6 +83,7 @@ const handleSubmit = async (values: any) => {
   }
   const res = await updatePictureUsingPost({
     id: pictureId,
+    spaceId: spaceId.value,
     ...values,
   })
   if (res.data.code === 20000 && res.data.data) {

@@ -118,7 +118,7 @@ const fetchSpaceLevels = async () => {
 }
 
 // 获取等级徽章样式类
-const getLevelBadgeClass = (level: number) => {
+const getLevelBadgeClass = (level: number | undefined) => {
   if (level === 0) return 'badge-current'
   return 'badge-coming'
 }
@@ -134,10 +134,16 @@ const onSubmit = async () => {
       spaceLevel: formState.spaceLevel,
     })
 
-    if (res.data.code === 20000) {
+    if (res.data.code === 20000 && res.data.data) {
       message.success('空间创建成功！')
-      // 跳转到我的空间页面或首页
-      router.push('/space/my')
+      // 等待接口返回空间ID，然后跳转到新创建的空间详情页
+      const newSpaceId = res.data.data
+      if (newSpaceId) {
+        router.push(`/space/${newSpaceId}`)
+      } else {
+        // 如果没有返回ID，跳转到我的空间页面
+        router.push('/space/my')
+      }
     } else {
       message.error('创建失败：' + res.data.message)
     }

@@ -5,6 +5,9 @@
       <a-flex justify="space-between" align="center">
         <h2>{{ space.spaceName }}（私有空间）</h2>
         <a-space size="middle">
+<!--          <a-button type="primary" :href="`/addPicture?spaceId=${id}`" target="_blank">
+            + 创建图片
+          </a-button>-->
           <a-button type="primary" @click="goToAddPicture">
             + 创建图片
           </a-button>
@@ -335,6 +338,12 @@ const fetchData = async () => {
   }
 }
 
+//创建图片跳转
+const goToAddPicture = () => {
+  // 跳转到创建图片页面，传递空间ID参数
+  router.push(`/addPicture?spaceId=${props.id}`)
+}
+
 // 图片预览
 const previewVisible = ref(false)
 const currentPicture = ref<(API.Picture & { isFavorite?: boolean }) | null>(null)
@@ -545,28 +554,28 @@ const zoomOut = () => {
 // 鼠标拖拽处理
 const handleMouseDown = (event: MouseEvent) => {
   if (!canDrag()) return
-  
+
   event.preventDefault()
   isDragging.value = true
   lastMouseX.value = event.clientX
   lastMouseY.value = event.clientY
-  
+
   document.addEventListener('mousemove', handleGlobalMouseMove)
   document.addEventListener('mouseup', handleGlobalMouseUp)
 }
 
 const handleGlobalMouseMove = (event: MouseEvent) => {
   if (!isDragging.value) return
-  
+
   const deltaX = event.clientX - lastMouseX.value
   const deltaY = event.clientY - lastMouseY.value
-  
+
   imageTranslateX.value += deltaX
   imageTranslateY.value += deltaY
-  
+
   lastMouseX.value = event.clientX
   lastMouseY.value = event.clientY
-  
+
   applyDragLimits()
 }
 
@@ -579,7 +588,7 @@ const handleGlobalMouseUp = () => {
 // 鼠标滚轮缩放
 const handleWheel = (event: WheelEvent) => {
   event.preventDefault()
-  
+
   if (event.deltaY < 0) {
     zoomIn()
   } else {
@@ -613,13 +622,13 @@ const handleTouchMove = (event: TouchEvent) => {
     const touch = event.touches[0]
     const deltaX = touch.clientX - lastTouchX.value
     const deltaY = touch.clientY - lastTouchY.value
-    
+
     imageTranslateX.value += deltaX
     imageTranslateY.value += deltaY
-    
+
     lastTouchX.value = touch.clientX
     lastTouchY.value = touch.clientY
-    
+
     applyDragLimits()
   } else if (event.touches.length === 2 && isTouching.value) {
     // 双指缩放
@@ -629,13 +638,13 @@ const handleTouchMove = (event: TouchEvent) => {
       Math.pow(touch2.clientX - touch1.clientX, 2) +
       Math.pow(touch2.clientY - touch1.clientY, 2)
     )
-    
+
     if (lastTouchDistance.value > 0) {
       const scaleFactor = currentDistance / lastTouchDistance.value
       imageScale.value = Math.max(0.5, Math.min(5, imageScale.value * scaleFactor))
       applyDragLimits()
     }
-    
+
     lastTouchDistance.value = currentDistance
   }
 }
@@ -649,7 +658,7 @@ const handleTouchEnd = () => {
 // 键盘事件处理
 const handleKeyDown = (event: KeyboardEvent) => {
   if (!previewVisible.value) return
-  
+
   switch (event.key) {
     case 'Escape':
       closePreview()
@@ -696,7 +705,7 @@ const handleImageLoad = (event: Event) => {
   if (img) {
     // 图片加载完成后显示
     img.style.opacity = '1'
-    
+
     // 如果是预览图片，获取其自然尺寸
     if (img.classList.contains('preview-image')) {
       imageNaturalWidth.value = img.naturalWidth
@@ -715,17 +724,14 @@ const handleImageError = (event: Event) => {
   }
 }
 
-const goToAddPicture = () => {
-  // TODO: 跳转到上传图片页面
-  message.info('上传功能开发中...')
-}
+
 
 // 页面加载
 onMounted(() => {
   fetchSpaceDetail()
   fetchData()
   document.addEventListener('keydown', handleKeyDown)
-  
+
   // 监听窗口大小变化
   window.addEventListener('resize', handleWindowResize)
 })
@@ -738,7 +744,7 @@ onUnmounted(() => {
   // 清理全局监听器
   document.removeEventListener('mousemove', handleGlobalMouseMove)
   document.removeEventListener('mouseup', handleGlobalMouseUp)
-  
+
   // 移除窗口大小变化监听器
   window.removeEventListener('resize', handleWindowResize)
 })

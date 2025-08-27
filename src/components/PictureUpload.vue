@@ -24,6 +24,7 @@ import { uploadPictureUsingPost } from '@/api/pictureController'
 
 interface Props {
   picture?: API.PictureVO
+  spaceId?: number
   onSuccess?: (newPicture: API.PictureVO) => void
 }
 
@@ -37,6 +38,7 @@ const handleUpload = async ({ file }: any) => {
   loading.value = true
   try {
     const params = props.picture ? { id: props.picture.id } : {}
+    params.spaceId = props.spaceId;
     //调用上传图片接口，openapi帮我们封装过
     const res = await uploadPictureUsingPost(params, {}, file)
     if (res.data.code === 20000 && res.data.data) {
