@@ -83,24 +83,54 @@
                 @load="handleImageLoad"
                 @error="handleImageError"
               />
-              <!-- 收藏按钮 -->
-              <div
-                class="favorite-btn"
-                @click="toggleFavorite(picture, $event)"
-              >
-                <a-button
-                  type="text"
-                  :class="['heart-btn', { 'favorited': picture.isFavorite }]"
-                  shape="circle"
-                  size="large"
+              <!-- 操作按钮组 -->
+              <div class="action-buttons">
+                <!-- 收藏按钮 -->
+                <div
+                  class="favorite-btn"
+                  @click="toggleFavorite(picture, $event)"
                 >
-                  <template #icon>
-                    <svg class="favorite-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                      <path v-if="picture.isFavorite" d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z" fill="currentColor"/>
-                      <path v-else d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/>
-                    </svg>
-                  </template>
-                </a-button>
+                  <a-button
+                    type="text"
+                    :class="['heart-btn', { 'favorited': picture.isFavorite }]"
+                    shape="circle"
+                    size="large"
+                  >
+                    <template #icon>
+                      <svg class="favorite-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path v-if="picture.isFavorite" d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z" fill="currentColor"/>
+                        <path v-else d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/>
+                      </svg>
+                    </template>
+                  </a-button>
+                </div>
+                <!-- 删除按钮 -->
+                <div
+                  class="delete-btn"
+                  @click="handleDeletePicture(picture, $event)"
+                >
+                  <a-popconfirm
+                    title="确定要删除这张图片吗？"
+                    ok-text="确定"
+                    cancel-text="取消"
+                    @confirm="confirmDeletePicture(picture)"
+                    @click.stop
+                  >
+                    <a-button
+                      type="text"
+                      class="delete-btn-inner"
+                      shape="circle"
+                      size="large"
+                      danger
+                    >
+                      <template #icon>
+                        <svg class="delete-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                          <path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2M10 11v6M14 11v6"/>
+                        </svg>
+                      </template>
+                    </a-button>
+                  </a-popconfirm>
+                </div>
               </div>
               <div class="image-overlay">
                 <div class="overlay-content">
@@ -265,7 +295,7 @@
 import { ref, reactive, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { getSpaceVoByIdUsingGet } from '@/api/spaceController'
-import { getPicturePagesVoUsingPost } from '@/api/pictureController'
+import { getPicturePagesVoUsingPost, deletePictureByIdUsingPost } from '@/api/pictureController'
 import { message } from 'ant-design-vue'
 import dayjs from 'dayjs'
 
@@ -693,11 +723,47 @@ const handleWindowResize = () => {
   }
 }
 
-const toggleFavorite = (picture: API.Picture & { isFavorite?: boolean }, event: Event) => {
-  event.stopPropagation()
+const toggleFavorite = (picture: API.Picture & { isFavorite?: boolean }, event?: Event) => {
+  if (event) {
+    event.stopPropagation()
+  }
   // TODO: 实现收藏/取消收藏逻辑
   picture.isFavorite = !picture.isFavorite
   message.success(picture.isFavorite ? '已收藏' : '已取消收藏')
+}
+
+// 删除图片处理
+const handleDeletePicture = (picture: API.Picture & { isFavorite?: boolean }, event: Event) => {
+  event.stopPropagation()
+}
+
+// 确认删除图片
+const confirmDeletePicture = async (picture: API.Picture & { isFavorite?: boolean }) => {
+  if (!picture.id) {
+    message.error('图片ID不存在')
+    return
+  }
+
+  try {
+    const res = await deletePictureByIdUsingPost({
+      id: picture.id
+    })
+
+    if (res.data.code === 20000) {
+      message.success('删除成功')
+      // 从列表中移除删除的图片
+      dataList.value = dataList.value.filter(p => p.id !== picture.id)
+      // 更新总数
+      total.value = Math.max(0, total.value - 1)
+      // 重新获取空间信息以更新容量
+      fetchSpaceDetail()
+    } else {
+      message.error('删除失败：' + res.data.message)
+    }
+  } catch (error) {
+    console.error('删除图片失败:', error)
+    message.error('删除失败')
+  }
 }
 
 const handleImageLoad = (event: Event) => {
@@ -988,8 +1054,8 @@ onUnmounted(() => {
     display: none;
   }
 
-  .favorite-btn {
-    display: none !important; /* 移动端完全隐藏收藏按钮 */
+  .action-buttons {
+    display: none !important; /* 移动端完全隐藏操作按钮组 */
   }
 
   .heart-btn {
@@ -1000,6 +1066,16 @@ onUnmounted(() => {
   .favorite-icon {
     width: 16px;
     height: 16px;
+  }
+
+  .delete-btn-inner {
+    width: 36px !important;
+    height: 36px !important;
+  }
+
+  .delete-icon {
+    width: 14px;
+    height: 14px;
   }
 }
 
@@ -1019,20 +1095,32 @@ onUnmounted(() => {
   opacity: 0.9;
 }
 
-/* 收藏按钮 */
-.favorite-btn {
+/* 操作按钮组 */
+.action-buttons {
   position: absolute;
   top: 10px;
   right: 10px;
   z-index: 10;
-  display: block;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
   opacity: 0;
   transition: opacity 0.3s ease;
 }
 
-/* PC端悬停时显示收藏按钮 */
-.picture-card:hover .favorite-btn {
+/* PC端悬停时显示操作按钮 */
+.picture-card:hover .action-buttons {
   opacity: 1;
+}
+
+/* 收藏按钮 */
+.favorite-btn {
+  display: block;
+}
+
+/* 删除按钮 */
+.delete-btn {
+  display: block;
 }
 
 .heart-btn {
@@ -1069,6 +1157,39 @@ onUnmounted(() => {
 
 .heart-btn.favorited .favorite-icon {
   color: #1890ff;
+}
+
+/* 删除按钮样式 */
+.delete-btn-inner {
+  background: rgba(50, 50, 50, 0.9) !important;
+  border: 1px solid rgba(80, 80, 80, 0.8) !important;
+  width: 44px !important;
+  height: 44px !important;
+  border-radius: 50% !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  backdrop-filter: blur(5px);
+  transition: all 0.3s ease !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.5) !important;
+}
+
+.delete-btn-inner:hover {
+  background: rgba(220, 38, 38, 0.9) !important;
+  transform: scale(1.1) !important;
+  box-shadow: 0 4px 16px rgba(220, 38, 38, 0.5) !important;
+  border-color: rgba(239, 68, 68, 1) !important;
+}
+
+.delete-icon {
+  width: 18px;
+  height: 18px;
+  color: #cccccc;
+  transition: color 0.3s ease;
+}
+
+.delete-btn-inner:hover .delete-icon {
+  color: #ffffff;
 }
 
 /* 无数据提示 */
