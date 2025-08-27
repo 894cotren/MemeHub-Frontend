@@ -11,6 +11,10 @@ import MyPicturesPage from '@/pages/picture/MyPicturesPage.vue'
 import UserUpdatePage from '@/pages/user/UserUpdatePage.vue'
 import HomePage from '@/pages/HomePage.vue'
 import BatchUploadPicturePage from '@/pages/admin/BatchUploadPicturePage.vue'
+import SpaceManagePage from '@/pages/admin/SpaceManagePage.vue'
+import AddSpacePage from '@/pages/space/AddSpacePage.vue'
+import MySpacePage from '@/pages/space/MySpacePage.vue'
+import SpaceDetailPage from '@/pages/space/SpaceDetailPage.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -46,6 +50,16 @@ const router = createRouter({
       component: BatchUploadPicturePage,
     },
     {
+      path: '/admin/spaceManage',
+      name: '空间管理',
+      component: SpaceManagePage,
+    },
+    {
+      path: '/mySpace',
+      name: '我的空间',
+      component: MySpacePage,
+    },
+    {
       path: '/admin/pictureManage',
       name: '图片管理',
       component: PictureManagePage,
@@ -54,6 +68,17 @@ const router = createRouter({
       path: '/pictureShow',
       name: 'meme图库',
       component: PictureShowPage,
+    },
+    {
+      path: '/addSpace',
+      name: '创建空间',
+      component: AddSpacePage,
+    },
+    {
+      path: '/space/:id',
+      name: '空间详情',
+      component: SpaceDetailPage,
+      props: true,
     },
     {
       path: '/favoritePicture',

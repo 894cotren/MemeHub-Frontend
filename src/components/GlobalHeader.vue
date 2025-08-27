@@ -100,6 +100,16 @@ const originItems =[
     title: '批量创建图片',
   },
   {
+    key: '/mySpace',
+    label: '我的空间',
+    title: '我的空间',
+  },
+  {
+    key: '/admin/spaceManage',
+    label: '空间管理',
+    title: '空间管理',
+  },
+  {
     key: '/admin/pictureManage',
     label: '图片管理',
     title: '图片管理',
