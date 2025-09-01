@@ -145,6 +145,14 @@
             />
           </a-form-item>
 
+          <a-form-item label="用户ID" name="id">
+            <a-input
+              v-model:value="formData.id"
+              disabled
+              size="large"
+            />
+          </a-form-item>
+
           <!-- 操作按钮 -->
           <div class="form-actions">
             <a-space>
