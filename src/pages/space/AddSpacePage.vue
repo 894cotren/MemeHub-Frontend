@@ -7,7 +7,7 @@
 
     <!-- 创建空间表单 - 放在正中间 -->
     <div class="create-form">
-      <h2>{{ isTeamSpace ? '创建团队空间' : '创建个人空间' }}</h2>
+      <h2>创建空间</h2>
       <a-form
         ref="formRef"
         :model="formState"
@@ -24,11 +24,11 @@
           ]"
         >
           <template #extra>
-            <span class="field-hint">{{ isTeamSpace ? '为您的团队空间起一个有意义的名字，方便团队成员识别和管理' : '为您的空间起一个有意义的名字，方便识别和管理' }}</span>
+            <span class="field-hint">为您的空间起一个有意义的名字，方便识别和管理</span>
           </template>
           <a-input
             v-model:value="formState.spaceName"
-            :placeholder="isTeamSpace ? '请输入团队空间名称' : '请输入空间名称'"
+            placeholder="请输入空间名称"
             maxlength="20"
             show-count
           />
@@ -56,7 +56,7 @@
             :loading="loading"
             class="submit-btn"
           >
-            {{ loading ? '创建中...' : (isTeamSpace ? '创建团队空间' : '创建空间') }}
+            {{ loading ? '创建中...' : '创建空间' }}
           </a-button>
         </a-form-item>
       </a-form>
@@ -76,7 +76,7 @@
           <div class="benefit-details">
             <p><strong>存储容量：</strong>{{ formatFileSize(level.maxSize || 0) }}</p>
             <p><strong>图片数量：</strong>{{ level.maxCount || 0 }} 张</p>
-            <p v-if="level.value === 0" class="current-level-tip">✨{{ isTeamSpace ? '团队空间' : '普通用户' }}仅支持创建此版本，其他版本请联系站长</p>
+            <p v-if="level.value === 0" class="current-level-tip">✨普通用户仅支持创建此版本，其他版本请联系站长</p>
           </div>
         </div>
       </div>
@@ -147,14 +147,14 @@ const onSubmit = async () => {
     })
 
     if (res.data.code === 20000 && res.data.data) {
-      message.success(`${isTeamSpace.value ? '团队空间' : '空间'}创建成功！`)
+      message.success('空间创建成功！')
       // 等待接口返回空间ID，然后跳转到新创建的空间详情页
       const newSpaceId = res.data.data
       if (newSpaceId) {
         router.push(`/space/${newSpaceId}`)
       } else {
         // 如果没有返回ID，跳转到我的空间页面
-        router.push('/mySpace')
+        router.push('/space/my')
       }
     } else {
       message.error('创建失败：' + res.data.message)

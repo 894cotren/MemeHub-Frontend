@@ -11,6 +11,14 @@
           <a-button type="primary" @click="goToAddPicture">
             + 创建图片
           </a-button>
+          <!-- 团队空间特有的成员管理按钮 -->
+          <a-button
+            v-if="space.spaceType === 1"
+            type="default"
+            @click="goToMemberManage"
+          >
+            👥 成员管理
+          </a-button>
           <a-tooltip
             :title="`占用空间 ${formatSize(space.totalSize || 0)} / ${formatSize(space.maxSize || 0)}`"
           >
@@ -292,8 +300,8 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, onMounted, onUnmounted } from 'vue'
-import { useRouter } from 'vue-router'
+import { ref, reactive, onMounted, onUnmounted, watch } from 'vue'
+import { useRouter, useRoute } from 'vue-router'
 import { getSpaceVoByIdUsingGet } from '@/api/spaceController'
 import { getPicturePagesVoUsingPost, deletePictureByIdUsingPost } from '@/api/pictureController'
 import { message } from 'ant-design-vue'
@@ -304,23 +312,31 @@ const props = defineProps<{
 }>()
 
 const router = useRouter()
+const route = useRoute()
 
 // 空间信息
 const space = ref<API.SpaceVO>({})
 
 // 获取空间详情
-const fetchSpaceDetail = async () => {
+const fetchSpaceDetail = async (spaceId?: string | number) => {
+  const id = spaceId || props.id
+  if (!id) return
+
   try {
+    console.log('获取空间详情，spaceId:', id)
     const res = await getSpaceVoByIdUsingGet({
-      id: props.id,
+      id: id,
     })
     if (res.data.code === 20000 && res.data.data) {
       space.value = res.data.data
+      console.log('获取到空间详情:', space.value)
     } else {
-      message.error('获取空间详情失败，' + res.data.message)
+      console.error('获取空间详情失败，响应:', res.data)
+      message.error('获取空间详情失败，' + (res.data.message || '未知错误'))
     }
   } catch (e: any) {
-    message.error('获取空间详情失败：' + e.message)
+    console.error('获取空间详情失败:', e)
+    message.error('获取空间详情失败：' + (e.response?.data?.message || e.message || '网络错误'))
   }
 }
 
@@ -345,20 +361,25 @@ const onPageChange = (page: number, pageSize: number) => {
 }
 
 // 获取数据
-const fetchData = async () => {
+const fetchData = async (spaceId?: string | number) => {
   loading.value = true
   try {
     // 转换搜索参数
     const params = {
-      spaceId: props.id,
+      spaceId: spaceId || props.id,
       ...searchParams,
     }
+    console.log('获取图片数据，参数:', params)
     const res = await getPicturePagesVoUsingPost(params)
     if (res.data.code === 20000 && res.data.data) {
       dataList.value = res.data.data.records ?? []
       total.value = res.data.data.total ?? 0
+      console.log('获取到图片数据:', dataList.value.length, '张图片')
     } else {
-      message.error('获取数据失败，' + res.data.message)
+      console.error('获取数据失败，响应:', res.data)
+      message.error('获取数据失败，' + (res.data.message || '未知错误'))
+      dataList.value = []
+      total.value = 0
     }
   } catch (error) {
     console.error('获取图片列表失败:', error)
@@ -371,7 +392,17 @@ const fetchData = async () => {
 //创建图片跳转
 const goToAddPicture = () => {
   // 跳转到创建图片页面，传递空间ID参数
-  router.push(`/addPicture?spaceId=${props.id}`)
+  const currentSpaceId = route.params.id || props.id
+  console.log('跳转到创建图片页面，spaceId:', currentSpaceId)
+  router.push(`/addPicture?spaceId=${currentSpaceId}`)
+}
+
+//跳转到成员管理页面
+const goToMemberManage = () => {
+  // 跳转到成员管理页面，传递空间ID参数
+  const currentSpaceId = route.params.id || props.id
+  console.log('跳转到成员管理页面，spaceId:', currentSpaceId)
+  router.push(`/space/${currentSpaceId}/members`)
 }
 
 // 图片预览
@@ -791,6 +822,20 @@ const handleImageError = (event: Event) => {
 }
 
 
+
+// 监听路由参数变化，重新加载数据
+watch(() => route.params.id, (newId, oldId) => {
+  if (newId && newId !== oldId) {
+    console.log('路由参数变化，从', oldId, '变为', newId)
+    // 重置分页和搜索参数
+    searchParams.current = 1
+    searchParams.sortOrder = 'descend'
+
+    // 重新获取数据
+    fetchSpaceDetail(newId)
+    fetchData(newId)
+  }
+}, { immediate: false })
 
 // 页面加载
 onMounted(() => {

@@ -18,6 +18,37 @@
         />
       </a-col>
 
+      <!-- 团队空间下拉菜单 -->
+      <a-col flex="150px" v-if="loginUserStore.loginUser.id">
+        <div class="team-space-dropdown">
+          <a-dropdown>
+            <a-button type="text" class="team-space-btn">
+              我的团队空间
+              <DownOutlined />
+            </a-button>
+            <template #overlay>
+              <a-menu @click="handleTeamSpaceClick">
+                <a-menu-item
+                  v-for="space in teamSpaces"
+                  :key="space.id"
+                  :data-space-id="space.id"
+                >
+                  {{ space.spaceName }}
+                </a-menu-item>
+                <a-menu-divider v-if="teamSpaces.length > 0" />
+                <a-menu-item key="create-team" @click="toCreateTeamSpace">
+                  <PlusOutlined />
+                  创建团队空间
+                </a-menu-item>
+                <a-menu-item key="no-team" disabled v-if="teamSpaces.length === 0">
+                  暂无团队空间
+                </a-menu-item>
+              </a-menu>
+            </template>
+          </a-dropdown>
+        </div>
+      </a-col>
+
       <!-- 用户信息展示栏     -->
       <a-col flex="120px">
         <div class="user-login-status">
@@ -52,14 +83,70 @@
   </div>
 </template>
 <script lang="ts" setup>
-import { computed, h, ref } from 'vue'
-import { HomeOutlined, LogoutOutlined,FormOutlined } from '@ant-design/icons-vue'
+import { computed, h, ref, onMounted, watch } from 'vue'
+import { HomeOutlined, LogoutOutlined, FormOutlined, DownOutlined, PlusOutlined } from '@ant-design/icons-vue'
 import { MenuProps, message } from 'ant-design-vue'
 import { useRouter } from 'vue-router'
 import { useLoginUserStore } from '@/stores/userLoginUserStore'
 import { userLogoutUsingGet } from '@/api/userController'
+import { listMyTeamSpaceUsingPost } from '@/api/spaceUserController'
+import { getSpaceVoByIdUsingGet } from '@/api/spaceController'
 
 const loginUserStore = useLoginUserStore()
+const router = useRouter()
+
+// 团队空间数据
+const teamSpaces = ref<API.SpaceVO[]>([])
+
+// 获取用户团队空间列表
+const fetchTeamSpaces = async () => {
+  try {
+    // 1. 获取用户加入的团队空间ID列表
+    const res = await listMyTeamSpaceUsingPost()
+    if (res.data.code === 20000 && res.data.data) {
+      const spaceUserList = res.data.data
+
+      // 2. 对每个空间ID获取详细信息
+      const spacePromises = spaceUserList.map(async (spaceUser) => {
+        try {
+          const spaceRes = await getSpaceVoByIdUsingGet({ id: spaceUser.spaceId })
+          if (spaceRes.data.code === 20000 && spaceRes.data.data) {
+            return spaceRes.data.data
+          }
+        } catch (error) {
+          console.error(`获取空间 ${spaceUser.spaceId} 详情失败:`, error)
+        }
+        return null
+      })
+
+      // 等待所有请求完成
+      const spaces = await Promise.all(spacePromises)
+      // 过滤掉null值
+      teamSpaces.value = spaces.filter(space => space !== null)
+    }
+  } catch (error) {
+    console.error('获取团队空间列表失败:', error)
+  }
+}
+
+// 处理团队空间点击
+const handleTeamSpaceClick = ({ key, domEvent }) => {
+  if (key === 'create-team') {
+    // 创建团队空间
+    router.push('/addSpace?spaceType=1')
+  } else {
+    // 跳转到对应空间详情页
+    const spaceId = domEvent?.target?.dataset?.spaceId || key
+    if (spaceId && spaceId !== 'no-team') {
+      router.push(`/space/${spaceId}`)
+    }
+  }
+}
+
+// 跳转到创建团队空间页面
+const toCreateTeamSpace = () => {
+  router.push('/addSpace?spaceType=1')
+}
 
 //原始菜单数组
 const originItems =[
@@ -104,11 +191,11 @@ const originItems =[
     label: '我的空间',
     title: '我的空间',
   },
-  // {
-  //   key: '/addSpace?spaceType=0',
-  //   label: '创建个人空间',
-  //   title: '创建个人空间',
-  // },
+  {
+    key: '/addSpace?spaceType=0',
+    label: '创建个人空间',
+    title: '创建个人空间',
+  },
   {
     key: '/addSpace?spaceType=1',
     label: '创建团队空间',
@@ -148,8 +235,23 @@ const items = computed(() => {
   return filterMenus(originItems)
 })
 
-//获取到路由对象。
-const router = useRouter()
+//获取到路由对象已经在上面定义过了
+
+// 监听用户登录状态变化，重新获取团队空间
+watch(() => loginUserStore.loginUser.id, (newUserId) => {
+  if (newUserId) {
+    fetchTeamSpaces()
+  } else {
+    teamSpaces.value = []
+  }
+})
+
+// 组件挂载时获取团队空间数据
+onMounted(() => {
+  if (loginUserStore.loginUser.id) {
+    fetchTeamSpaces()
+  }
+})
 
 //监听路由变化， 高亮当前菜单项
 const current = ref<string[]>(['home'])
@@ -293,5 +395,46 @@ const toUserUpdate = async () => {
   overflow: hidden;
   text-overflow: ellipsis;
   vertical-align: middle; /* 文本垂直居中 */
+}
+
+/* 团队空间下拉菜单样式 */
+.team-space-dropdown {
+  text-align: center;
+}
+
+.team-space-btn {
+  color: #cccccc !important;
+  font-size: 14px;
+  height: 32px;
+  padding: 0 8px;
+}
+
+.team-space-btn:hover {
+  color: #40a9ff !important;
+  background: rgba(64, 169, 255, 0.1) !important;
+}
+
+.team-space-dropdown :deep(.ant-dropdown-menu) {
+  background: rgb(50, 50, 50) !important;
+  border: 1px solid #434343;
+}
+
+.team-space-dropdown :deep(.ant-dropdown-menu .ant-dropdown-menu-item) {
+  color: #cccccc !important;
+  padding: 8px 16px;
+}
+
+.team-space-dropdown :deep(.ant-dropdown-menu .ant-dropdown-menu-item:hover) {
+  background: rgba(64, 169, 255, 0.1) !important;
+  color: #40a9ff !important;
+}
+
+.team-space-dropdown :deep(.ant-dropdown-menu .ant-dropdown-menu-item-disabled) {
+  color: #666666 !important;
+  cursor: not-allowed;
+}
+
+.team-space-dropdown :deep(.ant-dropdown-menu .ant-dropdown-menu-item .anticon) {
+  margin-right: 8px;
 }
 </style>
