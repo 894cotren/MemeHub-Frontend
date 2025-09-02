@@ -104,6 +104,16 @@ const originItems =[
     label: '我的空间',
     title: '我的空间',
   },
+  // {
+  //   key: '/addSpace?spaceType=0',
+  //   label: '创建个人空间',
+  //   title: '创建个人空间',
+  // },
+  {
+    key: '/addSpace?spaceType=1',
+    label: '创建团队空间',
+    title: '创建团队空间',
+  },
   {
     key: '/admin/spaceManage',
     label: '空间管理',
@@ -149,9 +159,23 @@ router.afterEach((to, from, next) => {
 
 //路由跳转事件
 const doMenuClick = ({ key }) => {
-  router.push({
-    path: key,
-  })
+  // 检查是否包含查询参数
+  if (key.includes('?')) {
+    const [path, queryString] = key.split('?')
+    const params = new URLSearchParams(queryString)
+    const query = {}
+    for (const [paramKey, paramValue] of params) {
+      query[paramKey] = paramValue
+    }
+    router.push({
+      path: path,
+      query: query
+    })
+  } else {
+    router.push({
+      path: key,
+    })
+  }
 }
 
 /**

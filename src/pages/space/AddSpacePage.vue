@@ -1,13 +1,13 @@
 <template>
   <div id="addSpacePage" class="dark-theme">
     <div class="page-header">
-      <h1>创建个人空间</h1>
-      <p class="page-description">创建您的专属存储空间，开始管理您的图片收藏</p>
+      <h1>{{ isTeamSpace ? '创建团队空间' : '创建个人空间' }}</h1>
+      <p class="page-description">{{ isTeamSpace ? '创建团队协作空间，与团队成员共同管理图片收藏' : '创建您的专属存储空间，开始管理您的图片收藏' }}</p>
     </div>
 
     <!-- 创建空间表单 - 放在正中间 -->
     <div class="create-form">
-      <h2>创建空间</h2>
+      <h2>{{ isTeamSpace ? '创建团队空间' : '创建个人空间' }}</h2>
       <a-form
         ref="formRef"
         :model="formState"
@@ -24,11 +24,11 @@
           ]"
         >
           <template #extra>
-            <span class="field-hint">为您的空间起一个有意义的名字，方便识别和管理</span>
+            <span class="field-hint">{{ isTeamSpace ? '为您的团队空间起一个有意义的名字，方便团队成员识别和管理' : '为您的空间起一个有意义的名字，方便识别和管理' }}</span>
           </template>
           <a-input
             v-model:value="formState.spaceName"
-            placeholder="请输入空间名称"
+            :placeholder="isTeamSpace ? '请输入团队空间名称' : '请输入空间名称'"
             maxlength="20"
             show-count
           />
@@ -56,7 +56,7 @@
             :loading="loading"
             class="submit-btn"
           >
-            {{ loading ? '创建中...' : '创建空间' }}
+            {{ loading ? '创建中...' : (isTeamSpace ? '创建团队空间' : '创建空间') }}
           </a-button>
         </a-form-item>
       </a-form>
@@ -76,7 +76,7 @@
           <div class="benefit-details">
             <p><strong>存储容量：</strong>{{ formatFileSize(level.maxSize || 0) }}</p>
             <p><strong>图片数量：</strong>{{ level.maxCount || 0 }} 张</p>
-            <p v-if="level.value === 0" class="current-level-tip">✨普通用户仅支持创建此版本，其他版本请联系站长</p>
+            <p v-if="level.value === 0" class="current-level-tip">✨{{ isTeamSpace ? '团队空间' : '普通用户' }}仅支持创建此版本，其他版本请联系站长</p>
           </div>
         </div>
       </div>
@@ -85,22 +85,33 @@
 </template>
 
 <script lang="ts" setup>
-import { reactive, ref, onMounted } from 'vue'
+import { reactive, ref, onMounted, computed, watch } from 'vue'
 import { addSpaceUsingPost, listSpaceLevelUsingGet } from '@/api/spaceController'
 import { message } from 'ant-design-vue'
-import { useRouter } from 'vue-router'
+import { useRouter, useRoute } from 'vue-router'
 import { SPACE_LEVEL_ENUM, SPACE_LEVEL_MAP } from '@/constants/space'
 import type { FormInstance } from 'ant-design-vue'
 
 const router = useRouter()
+const route = useRoute()
 const formRef = ref<FormInstance>()
 const loading = ref(false)
 const spaceLevels = ref<API.SpaceLevel[]>([])
+
+// 从URL参数获取spaceType，默认为0（个人空间）
+const spaceType = computed(() => {
+  const type = route.query.spaceType
+  return type ? parseInt(type as string) : 0
+})
+
+// 判断是否为团队空间
+const isTeamSpace = computed(() => spaceType.value === 1)
 
 // 表单数据
 const formState = reactive({
   spaceName: '',
   spaceLevel: SPACE_LEVEL_ENUM.COMMON, // 固定为普通版
+  spaceType: 0, // 初始值，会在onMounted中设置
 })
 
 // 获取空间权益列表
@@ -132,17 +143,18 @@ const onSubmit = async () => {
     const res = await addSpaceUsingPost({
       spaceName: formState.spaceName,
       spaceLevel: formState.spaceLevel,
+      spaceType: formState.spaceType,
     })
 
     if (res.data.code === 20000 && res.data.data) {
-      message.success('空间创建成功！')
+      message.success(`${isTeamSpace.value ? '团队空间' : '空间'}创建成功！`)
       // 等待接口返回空间ID，然后跳转到新创建的空间详情页
       const newSpaceId = res.data.data
       if (newSpaceId) {
         router.push(`/space/${newSpaceId}`)
       } else {
         // 如果没有返回ID，跳转到我的空间页面
-        router.push('/space/my')
+        router.push('/mySpace')
       }
     } else {
       message.error('创建失败：' + res.data.message)
@@ -163,8 +175,15 @@ const formatFileSize = (bytes: number) => {
   return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i]
 }
 
+// 监听spaceType变化并更新表单
+watch(spaceType, (newValue) => {
+  formState.spaceType = newValue
+})
+
 // 页面加载时获取空间权益信息
 onMounted(() => {
+  // 设置初始spaceType
+  formState.spaceType = spaceType.value
   fetchSpaceLevels()
 })
 </script>
