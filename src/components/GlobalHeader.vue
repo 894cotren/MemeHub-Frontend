@@ -109,7 +109,10 @@ const fetchTeamSpaces = async () => {
       // 2. 对每个空间ID获取详细信息
       const spacePromises = spaceUserList.map(async (spaceUser) => {
         try {
-          const spaceRes = await getSpaceVoByIdUsingGet({ id: spaceUser.spaceId })
+          // 确保spaceId是字符串类型，避免精度问题
+          const spaceIdStr = String(spaceUser.spaceId)
+          console.log('获取空间详情，spaceId:', spaceIdStr)
+          const spaceRes = await getSpaceVoByIdUsingGet({ id: spaceIdStr })
           if (spaceRes.data.code === 20000 && spaceRes.data.data) {
             return spaceRes.data.data
           }

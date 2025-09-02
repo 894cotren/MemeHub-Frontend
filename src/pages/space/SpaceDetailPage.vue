@@ -308,7 +308,7 @@ import { message } from 'ant-design-vue'
 import dayjs from 'dayjs'
 
 const props = defineProps<{
-  id: string | number
+  id: string
 }>()
 
 const router = useRouter()
@@ -318,12 +318,12 @@ const route = useRoute()
 const space = ref<API.SpaceVO>({})
 
 // 获取空间详情
-const fetchSpaceDetail = async (spaceId?: string | number) => {
+const fetchSpaceDetail = async (spaceId?: string) => {
   const id = spaceId || props.id
   if (!id) return
 
   try {
-    console.log('获取空间详情，spaceId:', id)
+    console.log('获取空间详情，spaceId:', id, '类型:', typeof id)
     const res = await getSpaceVoByIdUsingGet({
       id: id,
     })
@@ -361,7 +361,7 @@ const onPageChange = (page: number, pageSize: number) => {
 }
 
 // 获取数据
-const fetchData = async (spaceId?: string | number) => {
+const fetchData = async (spaceId?: string) => {
   loading.value = true
   try {
     // 转换搜索参数
@@ -369,7 +369,7 @@ const fetchData = async (spaceId?: string | number) => {
       spaceId: spaceId || props.id,
       ...searchParams,
     }
-    console.log('获取图片数据，参数:', params)
+    console.log('获取图片数据，参数:', params, 'spaceId类型:', typeof params.spaceId)
     const res = await getPicturePagesVoUsingPost(params)
     if (res.data.code === 20000 && res.data.data) {
       dataList.value = res.data.data.records ?? []
@@ -826,14 +826,18 @@ const handleImageError = (event: Event) => {
 // 监听路由参数变化，重新加载数据
 watch(() => route.params.id, (newId, oldId) => {
   if (newId && newId !== oldId) {
-    console.log('路由参数变化，从', oldId, '变为', newId)
+    console.log('路由参数变化，从', oldId, '变为', newId, '类型:', typeof newId)
     // 重置分页和搜索参数
     searchParams.current = 1
     searchParams.sortOrder = 'descend'
 
+    // 确保newId是字符串类型
+    const spaceIdStr = String(newId)
+    console.log('转换后的spaceId:', spaceIdStr)
+
     // 重新获取数据
-    fetchSpaceDetail(newId)
-    fetchData(newId)
+    fetchSpaceDetail(spaceIdStr)
+    fetchData(spaceIdStr)
   }
 }, { immediate: false })
 

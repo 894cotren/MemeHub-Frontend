@@ -21,16 +21,12 @@
         <a-form-item
           label="用户ID"
           name="userId"
-          :rules="[{ required: true, message: '请输入用户ID!' }, { type: 'number', min: 1, message: '用户ID必须大于0!' }]"
+          :rules="[{ required: true, message: '请输入用户ID!' }, { pattern: /^[1-9]\d*$/, message: '用户ID必须是大于0的整数!' }]"
         >
-          <a-input-number
+          <a-input
             v-model:value="newMemberForm.userId"
-            :min="1"
-            :max="999999"
-            :precision="0"
-            :controls="false"
             placeholder="请输入用户ID"
-            @change="onUserIdChange"
+            style="width: 200px"
           />
         </a-form-item>
 
@@ -154,7 +150,7 @@ const memberList = ref<API.SpaceUser[]>([])
 
 // 新成员表单
 const newMemberForm = reactive({
-  userId: null as number | null,
+  userId: '' as string,
   spaceRole: 'viewer' as string,
 })
 
@@ -180,7 +176,7 @@ const fetchMemberList = async () => {
   loading.value = true
   try {
     const res = await listSpaceUserUsingPost({
-      spaceId: parseInt(spaceId),
+      spaceId: spaceId,
     })
 
     if (res.data.code === 20000 && res.data.data) {
@@ -205,10 +201,14 @@ const handleAddMember = async () => {
     return
   }
 
+  console.log('正在添加成员，userId:', newMemberForm.userId, '类型:', typeof newMemberForm.userId)
+
   addLoading.value = true
   try {
+    // 直接使用字符串格式的空间ID和用户ID，避免数字精度问题
+    console.log('添加成员，spaceId:', spaceId, 'userId:', newMemberForm.userId)
     const res = await addSpaceUserUsingPost({
-      spaceId: parseInt(spaceId),
+      spaceId: spaceId,
       userId: newMemberForm.userId,
       spaceRole: newMemberForm.spaceRole,
     })
@@ -216,7 +216,7 @@ const handleAddMember = async () => {
     if (res.data.code === 20000) {
       message.success('成员添加成功')
       // 重置表单
-      newMemberForm.userId = null
+      newMemberForm.userId = ''
       newMemberForm.spaceRole = 'viewer'
       // 重新获取成员列表
       fetchMemberList()
@@ -298,10 +298,7 @@ const onFinishFailed = (errorInfo: any) => {
   console.error('表单验证失败:', errorInfo)
 }
 
-// 用户ID变化处理
-const onUserIdChange = (value: number | null) => {
-  newMemberForm.userId = value
-}
+// 用户ID变化处理 - 现在通过v-model自动绑定，无需额外处理
 
 // 获取角色文本
 const getRoleText = (role: string) => {
