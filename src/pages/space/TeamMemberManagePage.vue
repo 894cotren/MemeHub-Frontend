@@ -59,7 +59,10 @@
             <div class="member-info">
               <a-avatar :size="40" :src="member.user?.userAvatar" />
               <div class="member-details">
-                <div class="member-name">{{ member.user?.userName || '未知用户' }}</div>
+                <div class="member-name">
+                  {{ member.user?.userName || '未知用户' }}
+                  <a-tag v-if="isSpaceCreator(member)" size="small" color="gold">创建者</a-tag>
+                </div>
                 <div class="member-id">ID: {{ member.userId }}</div>
               </div>
             </div>
@@ -91,6 +94,11 @@
                   移除成员
                 </a-button>
               </a-popconfirm>
+
+              <!-- 创建者提示 -->
+              <a-tooltip v-if="isSpaceCreator(member)" title="空间创建者不能被修改或移除">
+                <span class="creator-hint">创建者</span>
+              </a-tooltip>
             </div>
           </div>
         </div>
@@ -130,10 +138,12 @@ import {
   deleteSpaceUserUsingPost
 } from '@/api/spaceUserController'
 import { getSpaceVoByIdUsingGet } from '@/api/spaceController'
+import { useLoginUserStore } from '@/stores/userLoginUserStore'
 import type { FormInstance } from 'ant-design-vue'
 
 const route = useRoute()
 const router = useRouter()
+const loginUserStore = useLoginUserStore()
 
 // 表单引用
 const addFormRef = ref<FormInstance>()
@@ -144,6 +154,7 @@ const addLoading = ref(false)
 const updateLoading = ref(false)
 const spaceName = ref('')
 const spaceId = route.params.id as string
+const spaceCreatorId = ref<string>('') // 空间创建者ID
 
 // 成员列表
 const memberList = ref<API.SpaceUser[]>([])
@@ -165,6 +176,8 @@ const fetchSpaceInfo = async () => {
     const res = await getSpaceVoByIdUsingGet({ id: spaceId })
     if (res.data.code === 20000 && res.data.data) {
       spaceName.value = res.data.data.spaceName
+      spaceCreatorId.value = String(res.data.data.userId) // 获取空间创建者ID
+      console.log('空间创建者ID:', spaceCreatorId.value)
     }
   } catch (error) {
     console.error('获取空间信息失败:', error)
@@ -320,14 +333,21 @@ const getRoleColor = (role: string) => {
   return colorMap[role as keyof typeof colorMap] || 'default'
 }
 
-// 判断是否可以编辑角色（暂时允许所有成员都可以编辑）
+// 判断是否可以编辑角色
 const canEditRole = (member: API.SpaceUser) => {
-  return true
+  // 空间创建者不能被编辑
+  return String(member.userId) !== spaceCreatorId.value
 }
 
-// 判断是否可以移除成员（暂时允许所有成员都可以移除）
+// 判断是否可以移除成员
 const canRemoveMember = (member: API.SpaceUser) => {
-  return true
+  // 空间创建者不能被移除
+  return String(member.userId) !== spaceCreatorId.value
+}
+
+// 判断成员是否是空间创建者
+const isSpaceCreator = (member: API.SpaceUser) => {
+  return String(member.userId) === spaceCreatorId.value
 }
 
 // 返回空间详情
@@ -573,5 +593,17 @@ onMounted(() => {
   background: #1890ff;
   border-color: #1890ff;
   color: #ffffff;
+}
+
+/* 创建者提示样式 */
+.creator-hint {
+  color: #faad14;
+  font-size: 12px;
+  font-weight: 500;
+  margin-left: 8px;
+  padding: 2px 6px;
+  background: rgba(250, 173, 20, 0.1);
+  border: 1px solid rgba(250, 173, 20, 0.3);
+  border-radius: 4px;
 }
 </style>
