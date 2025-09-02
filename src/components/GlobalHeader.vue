@@ -194,11 +194,11 @@ const originItems =[
     label: '我的空间',
     title: '我的空间',
   },
-  {
-    key: '/addSpace?spaceType=0',
-    label: '创建个人空间',
-    title: '创建个人空间',
-  },
+  // {
+  //   key: '/addSpace?spaceType=0',
+  //   label: '创建个人空间',
+  //   title: '创建个人空间',
+  // },
   {
     key: '/addSpace?spaceType=1',
     label: '创建团队空间',
