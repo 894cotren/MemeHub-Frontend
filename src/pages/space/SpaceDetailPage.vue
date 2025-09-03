@@ -3,7 +3,7 @@
     <!-- 空间信息 -->
     <div class="space-header">
       <a-flex justify="space-between" align="center">
-        <h2>{{ space.spaceName }}（私有空间）</h2>
+        <h2>{{ space.spaceName }}（{{ space.spaceType === 1 ? '团队空间' : '私有空间' }}）</h2>
         <a-space size="middle">
 <!--          <a-button type="primary" :href="`/addPicture?spaceId=${id}`" target="_blank">
             + 创建图片

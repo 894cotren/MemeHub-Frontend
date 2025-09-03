@@ -124,8 +124,11 @@ const fetchTeamSpaces = async () => {
 
       // 等待所有请求完成
       const spaces = await Promise.all(spacePromises)
-      // 过滤掉null值
-      teamSpaces.value = spaces.filter(space => space !== null)
+      console.log('获取到的所有空间:', spaces.map(s => s ? `${s.spaceName}(type:${s.spaceType})` : 'null'))
+
+      // 过滤掉null值，并只保留团队空间（spaceType=1）
+      teamSpaces.value = spaces.filter(space => space !== null && space.spaceType === 1)
+      console.log('过滤后的团队空间:', teamSpaces.value.map(s => `${s.spaceName}(type:${s.spaceType})`))
     }
   } catch (error) {
     console.error('获取团队空间列表失败:', error)

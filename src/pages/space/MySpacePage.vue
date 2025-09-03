@@ -21,12 +21,15 @@ const checkUserSpace = async () => {
     router.replace('/user/login')
     return
   }
-  // 获取用户空间信息
+  // 获取用户个人空间信息，添加spaceType=0筛选条件
+  console.log('查询个人空间，用户ID:', loginUser.id)
   const res = await listSpaceVoByPageUsingPost({
     userId: loginUser.id,
+    spaceType: 0, // 只查询个人空间
     pageNum: 1,
     pageSize: 1,
   })
+  console.log('个人空间查询结果:', res.data)
   if (res.data.code === 20000) {
     if (res.data.data && res.data.data.records && res.data.data.records.length > 0) {
       const space = res.data.data.records[0]
